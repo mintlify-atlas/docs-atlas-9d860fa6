@@ -1,0 +1,135 @@
+{
+  "projectType": "saas",
+  "projectName": "Mas Agua",
+  "projectDescription": "Water management SCADA platform for real-time monitoring, control, and visualization of water infrastructure",
+  "theme": "aspen",
+  "primaryColor": "#218ecc",
+  "lightColor": "#ebf7f8",
+  "darkColor": "#7c98b0",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/dashboard",
+              "features/real-time-monitoring",
+              "features/charts-visualization",
+              "features/maps",
+              "features/diagram-editor"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/variables",
+              "configuration/plc-profiles",
+              "configuration/alarms",
+              "configuration/notifications",
+              "configuration/security"
+            ]
+          },
+          {
+            "group": "User Guides",
+            "pages": [
+              "guides/creating-dashboards",
+              "guides/managing-charts",
+              "guides/working-with-maps",
+              "guides/drawing-diagrams",
+              "guides/pump-monitoring",
+              "guides/alarm-management"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Components",
+        "groups": [
+          {
+            "group": "Chart Components",
+            "pages": [
+              "components/charts/liquid-fill",
+              "components/charts/gauge",
+              "components/charts/boolean-chart",
+              "components/charts/pie-chart",
+              "components/charts/bar-chart",
+              "components/charts/line-chart"
+            ]
+          },
+          {
+            "group": "UI Components",
+            "pages": [
+              "components/ui/button-custom",
+              "components/ui/card-custom",
+              "components/ui/table-custom",
+              "components/ui/loader"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Desktop App",
+        "groups": [
+          {
+            "group": "Tauri Desktop",
+            "pages": [
+              "desktop/overview",
+              "desktop/installation",
+              "desktop/building",
+              "desktop/updates"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "API",
+            "pages": [
+              "api/overview",
+              "api/authentication",
+              "api/endpoints"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Real-time monitoring dashboards with live data updates",
+    "Interactive maps with geo-located sensors and infrastructure",
+    "Multiple chart types for data visualization (gauges, liquid fill, pie, bar, line)",
+    "Visual diagram editor for network schemas using Konva",
+    "Alarm and notification system with configurable triggers",
+    "PLC profile configuration and variable management",
+    "Pump control and monitoring with status indicators",
+    "User authentication and role-based access control",
+    "Desktop application with Tauri for native performance",
+    "Data export capabilities (CSV, PDF reports)"
+  ],
+  "publicApiSurface": [
+    "/login - User authentication",
+    "/dashboardCharts - Fetch dashboard chart configurations",
+    "/indicatorCharts - Retrieve indicator charts for home view",
+    "/multipleDataInflux - Batch fetch real-time data from InfluxDB",
+    "/map - Create, read, update map configurations",
+    "/diagram - Manage network diagrams",
+    "/vars - Configure InfluxDB variables",
+    "/plc - Configure PLC profiles",
+    "/alarm - Alarm configuration endpoints",
+    "/notifications - Notification settings",
+    "/security - User security and permissions",
+    "/pumps - Pump monitoring and control data"
+  ]
+}
