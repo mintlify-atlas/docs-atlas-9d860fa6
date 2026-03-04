@@ -1,0 +1,246 @@
+---
+title: 'BooleanChart'
+description: 'LED-style status indicator for displaying boolean on/off states'
+icon: 'circle-dot'
+---
+
+The `BooleanChart` component renders an LED-style indicator that visualizes boolean states with customizable colors and labels. Perfect for status indicators and binary state displays.
+
+## Basic Usage
+
+```jsx
+import BooleanChart from '@/modules/Charts/components/BooleanChart'
+
+<BooleanChart
+  value={true}
+  textOn="Encendido"
+  textOff="Apagado"
+  colorOn="#00ff00"
+  colorOff="#444"
+/>
+```
+
+## Props
+
+<ParamField path="value" type="boolean | string" required>
+  The current state to display. Can be:
+  - `true` - Shows ON state with green LED
+  - `false` - Shows OFF state with dark LED
+  - `"Sin datos"` - Shows no data state with gray LED
+  - Any other value is treated as having data
+</ParamField>
+
+<ParamField path="textOn" type="string" default="Encendido">
+  Label text to display when value is `true` (ON state).
+</ParamField>
+
+<ParamField path="textOff" type="string" default="Apagado">
+  Label text to display when value is `false` (OFF state).
+</ParamField>
+
+<ParamField path="colorOn" type="string" default="#00ff00">
+  Color for the LED in ON state. Accepts hex color codes. Used for the gradient and glow effect.
+</ParamField>
+
+<ParamField path="colorOff" type="string" default="#444">
+  Color for the LED in OFF state. Accepts hex color codes.
+</ParamField>
+
+## Examples
+
+### Motor Status
+
+```jsx
+<BooleanChart
+  value={true}
+  textOn="Motor Running"
+  textOff="Motor Stopped"
+  colorOn="#10b981"
+  colorOff="#ef4444"
+/>
+```
+
+### Connection Status
+
+```jsx
+<BooleanChart
+  value={false}
+  textOn="Connected"
+  textOff="Disconnected"
+  colorOn="#3b82f6"
+  colorOff="#6b7280"
+/>
+```
+
+### No Data State
+
+```jsx
+<BooleanChart
+  value="Sin datos"
+  textOn="Active"
+  textOff="Inactive"
+  colorOn="#f59e0b"
+  colorOff="#1f2937"
+/>
+```
+
+Shows a gray LED with "Sin datos" label when data is unavailable.
+
+### Custom Colors
+
+```jsx
+<BooleanChart
+  value={true}
+  textOn="System OK"
+  textOff="System Error"
+  colorOn="#22c55e"
+  colorOff="#dc2626"
+/>
+```
+
+## Visual States
+
+### ON State (value = true)
+
+**LED Appearance**:
+- **Gradient**: Radial gradient with three stops
+  - Center (offset 0): `#d1fae5` (light green)
+  - Mid (offset 0.4): Your `colorOn`
+  - Edge (offset 1): `#065f46` (dark green)
+- **Glow**: 35px shadow blur with `colorOn`
+- **Text color**: `#065f46` (dark green)
+- **Text**: Shows `textOn` value
+
+### OFF State (value = false)
+
+**LED Appearance**:
+- **Gradient**: Radial gradient
+  - Center (offset 0): `#9ca3af` (light gray)
+  - Edge (offset 1): `#1f2937` (dark gray)
+- **Glow**: 10px shadow blur, black
+- **Text color**: `#374151` (medium gray)
+- **Text**: Shows `textOff` value
+
+### No Data State (value = "Sin datos")
+
+**LED Appearance**:
+- **Gradient**: Radial gradient
+  - Center (offset 0): `#e5e7eb` (very light gray)
+  - Edge (offset 1): `#6b7280` (medium gray)
+- **Glow**: 8px shadow blur
+- **Text color**: `#6b7280` (gray)
+- **Text**: "Sin datos"
+
+## LED Structure
+
+The component is built with three layers:
+
+### 1. Main LED Circle (z-index: 3)
+
+- **Symbol**: Circle
+- **Size**: 110px diameter
+- **Position**: `[0.5, 0.55]` (centered, slightly down)
+- **Style**: Radial gradient based on state
+- **Shadow**: Dynamic based on state
+
+### 2. Outer Ring (z-index: 2)
+
+- **Symbol**: Circle
+- **Size**: 130px diameter
+- **Position**: `[0.5, 0.55]`
+- **Style**: Transparent fill with dark border
+- **Border**: 6px, `#1f2937`
+- **Shadow**: 15px blur, `rgba(0,0,0,0.6)`
+
+### 3. Status Text (z-index: 4)
+
+- **Type**: Custom text element
+- **Position**: 82% from top, centered horizontally
+- **Font size**: 20px
+- **Font weight**: 600 (semi-bold)
+- **Color**: Dynamic based on state
+
+## Configuration Schema
+
+The component has a validation schema (Zod) for configuration:
+
+```javascript
+import { BooleanChartSchema } from '@/modules/Charts/schemas/BooleanChartSchema'
+
+const config = {
+  title: 'Motor Status',
+  textOn: 'Running',
+  textOff: 'Stopped',
+  colorOn: '#10b981',
+  colorOff: '#ef4444',
+  order: 1
+}
+
+BooleanChartSchema.parse(config)
+```
+
+### Schema Requirements
+
+<ParamField path="title" type="string" required>
+  Chart title (minimum 1 character).
+</ParamField>
+
+<ParamField path="textOn" type="string" required>
+  ON state label (minimum 1 character).
+</ParamField>
+
+<ParamField path="textOff" type="string" required>
+  OFF state label (minimum 1 character).
+</ParamField>
+
+<ParamField path="colorOn" type="string" required>
+  Hex color code for ON state. Must match pattern: `#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})`
+</ParamField>
+
+<ParamField path="colorOff" type="string" required>
+  Hex color code for OFF state. Must match pattern: `#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})`
+</ParamField>
+
+<ParamField path="order" type="number" required>
+  Display order (minimum 1).
+</ParamField>
+
+**Validation Rules**:
+- `colorOn` and `colorOff` must be different
+- All colors must be valid hex codes
+
+## Use Cases
+
+- **Equipment status**: Motors, pumps, valves on/off
+- **Connection indicators**: Network status, device connectivity
+- **Alarm states**: Active/inactive alarms
+- **Process states**: Running/stopped, enabled/disabled
+- **Binary sensors**: Door open/closed, motion detected/clear
+- **System health**: OK/error status
+
+## Accessibility
+
+The component uses both color and text to convey state:
+
+- Clear text labels for each state
+- High contrast between states
+- Distinct visual styling (glow effects)
+- No animation that could cause distraction
+
+## Container Requirements
+
+The chart uses a coordinate system and works best in square containers:
+
+```jsx
+<div style={{ width: '200px', height: '200px' }}>
+  <BooleanChart value={true} />
+</div>
+```
+
+**Recommendations**:
+- Minimum size: 150x150px
+- Optimal size: 200x200px to 300x300px
+- Maintains aspect ratio automatically
+
+See: [BooleanChart.jsx](/home/daytona/workspace/source/src/modules/Charts/components/BooleanChart.jsx)  
+See: [BooleanChartSchema.js](/home/daytona/workspace/source/src/modules/Charts/schemas/BooleanChartSchema.js)

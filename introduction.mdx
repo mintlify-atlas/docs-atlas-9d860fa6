@@ -1,0 +1,126 @@
+---
+title: Introduction
+description: Learn about Mas Agua, a comprehensive water management SCADA platform for real-time monitoring and control
+---
+
+Mas Agua is a modern SCADA (Supervisory Control and Data Acquisition) platform designed for water management systems. Built with React, Vite, and Tauri, it provides comprehensive tools for monitoring, controlling, and visualizing water infrastructure in real-time.
+
+## What is Mas Agua?
+
+Mas Agua combines the power of web technologies with desktop application capabilities to deliver a robust water management solution. The platform integrates real-time data from InfluxDB, provides interactive visualizations, and supports both web and desktop deployments.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Real-Time Dashboards" icon="gauge">
+    Monitor water systems with customizable charts including liquid fill gauges, gauges, pie charts, and boolean indicators
+  </Card>
+  
+  <Card title="Interactive Maps" icon="map">
+    Visualize infrastructure locations and real-time data on interactive maps powered by MapLibre GL
+  </Card>
+  
+  <Card title="Diagram Editor" icon="diagram-project">
+    Create custom system diagrams with drag-and-drop tools using Konva for visual system representation
+  </Card>
+  
+  <Card title="Alarm System" icon="bell">
+    Configure and monitor alarms with real-time notifications for critical system events
+  </Card>
+</CardGroup>
+
+## Core Capabilities
+
+### Dashboard Visualization
+
+Mas Agua supports multiple chart types for visualizing water system data:
+
+- **Liquid Fill Charts** - Visual representation of tank levels and percentages
+- **Gauge Charts** - Speed and pressure monitoring
+- **Boolean Indicators** - Pump status and valve states
+- **Time Series Charts** - Historical data analysis with InfluxDB integration
+- **Pie Charts** - Distribution and composition visualization
+
+### Real-Time Data Integration
+
+The platform fetches data from InfluxDB time-series database at configurable intervals (default 30 seconds) to provide:
+
+- Live sensor readings
+- Pump and valve status monitoring
+- Calculated values using custom equations
+- Multi-variable aggregations
+
+### System Diagram Creation
+
+Create detailed system diagrams with:
+
+- Drag-and-drop image placement
+- Custom shapes and lines
+- Text annotations with styling
+- Real-time data overlays on diagram elements
+- Interactive tooltips
+
+### Mapping Capabilities
+
+Visualize your water infrastructure geographically:
+
+- Interactive maps with custom markers
+- Link sensor data to map locations
+- Real-time status updates on map markers
+- Custom map layers and styling
+
+## Technology Stack
+
+Mas Agua is built with modern web technologies:
+
+| Technology | Purpose |
+|------------|----------|
+| **React 18** | UI framework for building interactive interfaces |
+| **Vite** | Fast build tool and development server |
+| **Tauri 2** | Desktop application framework |
+| **Material-UI** | Component library for consistent design |
+| **ECharts** | Advanced charting library |
+| **Konva** | Canvas library for diagram editor |
+| **MapLibre GL** | Interactive mapping solution |
+| **InfluxDB** | Time-series database (external) |
+| **Socket.IO** | Real-time bidirectional communication |
+
+## Use Cases
+
+<AccordionGroup>
+  <Accordion title="Water Treatment Facilities">
+    Monitor treatment processes, chemical levels, flow rates, and equipment status in real-time with customizable dashboards.
+  </Accordion>
+  
+  <Accordion title="Distribution Networks">
+    Track pressure zones, pump stations, and valve operations across your water distribution system using interactive maps.
+  </Accordion>
+  
+  <Accordion title="Pumping Stations">
+    Control and monitor pump operations, track runtime hours, and receive alerts for pump failures or unusual conditions.
+  </Accordion>
+  
+  <Accordion title="Reservoir Management">
+    Visualize tank levels, monitor fill/drain cycles, and track water quality parameters with liquid fill gauges and trend charts.
+  </Accordion>
+</AccordionGroup>
+
+## Deployment Options
+
+Mas Agua offers flexible deployment:
+
+- **Web Application** - Deploy to any web server using Docker and Nginx
+- **Desktop Application** - Install native applications for Windows, macOS, and Linux using Tauri
+- **Hybrid Deployment** - Run both web and desktop versions from the same codebase
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Get Mas Agua installed on your system
+  </Card>
+  
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Create your first dashboard in minutes
+  </Card>
+</CardGroup>

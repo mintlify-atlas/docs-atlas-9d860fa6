@@ -1,0 +1,316 @@
+---
+title: 'BarDataSet'
+description: 'Bar chart component for displaying multi-series categorical data'
+icon: 'chart-column'
+---
+
+The `BarDataSet` component renders multi-series bar charts using Apache ECharts with dataset-based configuration. It supports multiple data series with automatic legend and tooltip generation.
+
+## Basic Usage
+
+```jsx
+import BarDataSet from '@/modules/Charts/components/BarDataSet'
+
+const chartData = [
+  ['product', '2015', '2016', '2017'],
+  ['Matcha Latte', 43.3, 85.8, 93.7],
+  ['Milk Tea', 83.1, 73.4, 55.1],
+  ['Cheese Cocoa', 86.4, 65.2, 82.5],
+  ['Walnut Brownie', 72.4, 53.9, 39.1]
+]
+
+<BarDataSet data={chartData} />
+```
+
+## Props
+
+<ParamField path="data" type="array[]" required>
+  Two-dimensional array where:
+  - **First row**: Column headers (category label + series names)
+  - **Remaining rows**: Data rows (category + values for each series)
+  
+  Structure: `[headers, ...dataRows]`
+</ParamField>
+
+## Data Format
+
+The component uses ECharts' dataset format:
+
+```javascript
+const data = [
+  // Header row: [category, series1, series2, series3, ...]
+  ['product', '2021', '2022', '2023'],
+  
+  // Data rows: [categoryValue, value1, value2, value3, ...]
+  ['Product A', 120, 132, 101],
+  ['Product B', 89, 134, 152],
+  ['Product C', 72, 98, 139],
+  ['Product D', 103, 110, 125]
+]
+```
+
+### Header Row (Index 0)
+
+- **First element**: Category column name (e.g., "product", "month")
+- **Remaining elements**: Series names for the legend (e.g., "2021", "2022")
+
+### Data Rows (Index 1+)
+
+- **First element**: Category label (x-axis label)
+- **Remaining elements**: Numeric values for each series
+
+## Examples
+
+### Sales by Product
+
+```jsx
+const salesData = [
+  ['product', 'Q1', 'Q2', 'Q3', 'Q4'],
+  ['Laptop', 45000, 52000, 48000, 61000],
+  ['Phone', 38000, 42000, 45000, 51000],
+  ['Tablet', 21000, 19000, 23000, 27000],
+  ['Watch', 8000, 9500, 11000, 13500]
+]
+
+<BarDataSet data={salesData} />
+```
+
+### Monthly Metrics
+
+```jsx
+const monthlyData = [
+  ['month', 'Users', 'Revenue', 'Orders'],
+  ['Jan', 1200, 45000, 320],
+  ['Feb', 1450, 52000, 385],
+  ['Mar', 1650, 58000, 420],
+  ['Apr', 1850, 67000, 475]
+]
+
+<BarDataSet data={monthlyData} />
+```
+
+### Performance Comparison
+
+```jsx
+const performanceData = [
+  ['metric', 'Server A', 'Server B', 'Server C'],
+  ['CPU Usage', 45, 67, 52],
+  ['Memory Usage', 78, 85, 72],
+  ['Disk I/O', 34, 45, 38],
+  ['Network', 56, 62, 59]
+]
+
+<BarDataSet data={performanceData} />
+```
+
+## Chart Configuration
+
+### Dataset
+
+Data is provided via ECharts' dataset feature:
+
+```javascript
+dataset: {
+  source: data || []
+}
+```
+
+Benefits:
+- Cleaner data structure
+- Automatic series generation
+- Easy data updates
+
+### Axes
+
+**X-Axis (Category)**:
+```javascript
+xAxis: { 
+  type: 'category' 
+}
+```
+- Automatically reads categories from first column
+- Labels from data rows
+
+**Y-Axis (Value)**:
+```javascript
+yAxis: {}
+```
+- Auto-scales based on data range
+- Displays grid lines
+
+### Series
+
+Series are defined based on data columns:
+
+```javascript
+series: [
+  { type: 'bar' },  // Column 2
+  { type: 'bar' },  // Column 3
+  { type: 'bar' }   // Column 4
+]
+```
+
+Each `{ type: 'bar' }` creates a series from the corresponding data column.
+
+### Legend
+
+```javascript
+legend: {}
+```
+
+- Automatically populated from header row
+- Shows/hides series on click
+- Positioned at top by default
+
+### Tooltip
+
+```javascript
+tooltip: {}
+```
+
+- Triggered on hover
+- Shows all series values for the category
+- Default formatting
+
+### Toolbox
+
+```javascript
+toolbox: {
+  feature: {
+    saveAsImage: false
+  }
+}
+```
+
+Currently, save-as-image is disabled.
+
+## Customization
+
+### Number of Series
+
+Add or remove series by adjusting the header row and `series` array:
+
+```javascript
+// 5 series example
+const data = [
+  ['product', 'Jan', 'Feb', 'Mar', 'Apr', 'May'],
+  ['Product A', 10, 20, 30, 40, 50],
+  // ...
+]
+
+// In component, modify series array:
+series: [
+  { type: 'bar' },
+  { type: 'bar' },
+  { type: 'bar' },
+  { type: 'bar' },
+  { type: 'bar' }
+]
+```
+
+### Series Configuration
+
+Customize individual series:
+
+```javascript
+series: [
+  { 
+    type: 'bar',
+    name: 'Actual',
+    itemStyle: { color: '#3b82f6' }
+  },
+  { 
+    type: 'bar',
+    name: 'Target',
+    itemStyle: { color: '#10b981' }
+  }
+]
+```
+
+### Enable Save Image
+
+```javascript
+toolbox: {
+  feature: {
+    saveAsImage: { title: 'Save as Image' }
+  }
+}
+```
+
+## Data Requirements
+
+### Minimum Data
+
+```javascript
+// At least header + 1 data row
+const minData = [
+  ['category', 'Series 1'],
+  ['Item A', 100]
+]
+```
+
+### Column Count
+
+- **Header**: 1 category column + N series columns
+- **Data rows**: Must match header column count
+- **Series array**: Must have N entries (one per series column)
+
+### Value Types
+
+- Category column: Strings
+- Series columns: Numbers
+- Empty/null values: Show gaps in bars
+
+## Use Cases
+
+- **Sales comparison**: Products across time periods
+- **Performance metrics**: Multiple metrics for different entities
+- **Resource usage**: Usage by category over time
+- **Survey results**: Response distributions across groups
+- **Budget analysis**: Planned vs. actual across departments
+- **A/B testing**: Metrics across test variants
+
+## Responsive Behavior
+
+The chart automatically:
+- Fills its container width and height
+- Resizes on window resize events
+- Adjusts bar widths based on data count
+- Scales axes dynamically
+
+## Container Requirements
+
+```jsx
+<div style={{ width: '100%', height: '400px' }}>
+  <BarDataSet data={data} />
+</div>
+```
+
+**Recommendations**:
+- Minimum width: 400px
+- Minimum height: 300px
+- Height should accommodate legend and axis labels
+- Wider containers work better for many categories
+
+## Empty/Invalid Data
+
+When `data` is:
+- `null` or `undefined`: Dataset is empty array `[]`
+- Empty array `[]`: Chart renders with no data
+- Missing values: Gaps appear in the chart
+
+## Stacked Bars
+
+To create stacked bars, modify the series configuration:
+
+```javascript
+series: [
+  { type: 'bar', stack: 'total' },
+  { type: 'bar', stack: 'total' },
+  { type: 'bar', stack: 'total' }
+]
+```
+
+All series with the same `stack` value will be stacked.
+
+See: [BarDataSet.jsx](/home/daytona/workspace/source/src/modules/Charts/components/BarDataSet.jsx)

@@ -1,0 +1,437 @@
+---
+title: TableCustom
+description: Advanced data table component with sorting, filtering, pagination, and export capabilities
+---
+
+## Overview
+
+TableCustom is a powerful table component built on Material React Table (MRT) that provides advanced features including sorting, filtering, pagination, grouping, column visibility control, and data export to Excel and PDF formats.
+
+## Import
+
+```jsx
+import TableCustom from '@/components/TableCustom';
+```
+
+## Material-UI & MRT Integration
+
+This component is built on top of Material React Table (MRT), which integrates with Material-UI:
+
+```jsx
+import { MaterialReactTable, useMaterialReactTable } from 'material-react-table';
+import { Box, IconButton, Tooltip } from '@mui/material';
+```
+
+## Core Props
+
+<ParamField path="data" type="array" required>
+  Array of data objects to display in the table
+</ParamField>
+
+<ParamField path="columns" type="array" required>
+  Array of column definitions following MRT column structure with `header` and `accessorKey` properties
+</ParamField>
+
+## Feature Control Props
+
+### Display & Layout
+
+<ParamField path="topToolbar" type="boolean" default="false">
+  Enable the top toolbar with search and action buttons
+</ParamField>
+
+<ParamField path="density" type="boolean">
+  Enable density toggle button (compact/comfortable/spacious)
+</ParamField>
+
+<ParamField path="copy" type="boolean">
+  Enable click-to-copy functionality for table cells
+</ParamField>
+
+<ParamField path="fullScreen" type="boolean" default="false">
+  Enable fullscreen toggle button
+</ParamField>
+
+### Pagination
+
+<ParamField path="pagination" type="boolean" default="false">
+  Enable table pagination
+</ParamField>
+
+<ParamField path="pageSize" type="number" default="5">
+  Number of rows per page when pagination is enabled
+</ParamField>
+
+### Filtering & Sorting
+
+<ParamField path="filter" type="boolean" default="false">
+  Enable column filtering
+</ParamField>
+
+<ParamField path="sort" type="boolean">
+  Enable column sorting
+</ParamField>
+
+<ParamField path="orderBy" type="string">
+  Column ID to sort by initially
+</ParamField>
+
+<ParamField path="groupBy" type="string">
+  Column ID to group rows by
+</ParamField>
+
+<ParamField path="grouping" type="boolean">
+  Enable column grouping functionality
+</ParamField>
+
+### Column Control
+
+<ParamField path="hide" type="boolean">
+  Enable column show/hide functionality
+</ParamField>
+
+<ParamField path="columnVisibility" type="object">
+  Object controlling which columns are visible (e.g., `{ columnId: true/false }`)
+</ParamField>
+
+<ParamField path="onColumnVisibilityChange" type="function">
+  Callback function when column visibility changes
+</ParamField>
+
+### Selection
+
+<ParamField path="checkbox" type="boolean" default="false">
+  Enable row selection with checkboxes
+</ParamField>
+
+### Export
+
+<ParamField path="exportExcel" type="boolean">
+  Enable Excel/CSV export button in toolbar
+</ParamField>
+
+<ParamField path="exportPdf" type="boolean">
+  Enable PDF export button in toolbar
+</ParamField>
+
+### Custom Styling
+
+<ParamField path="header" type="object">
+  Custom CSS styles for table header cells (MUI sx prop format)
+</ParamField>
+
+<ParamField path="footer" type="object">
+  Custom CSS styles for table footer/bottom toolbar (MUI sx prop format)
+</ParamField>
+
+<ParamField path="card" type="object">
+  Custom CSS styles for table container/paper (MUI sx prop format)
+</ParamField>
+
+<ParamField path="toolbarClass" type="object">
+  Custom CSS styles for top toolbar (MUI sx prop format)
+</ParamField>
+
+<ParamField path="bodyContent" type="object">
+  Custom CSS styles for table body cells (MUI sx prop format)
+</ParamField>
+
+### Custom Functions
+
+<ParamField path="ChangeColorRow" type="function">
+  Function to conditionally change row background color. Receives row object, returns boolean. Yellow background applied if returns true.
+</ParamField>
+
+<ParamField path="btnCustomToolbar" type="ReactNode">
+  Custom button or component to render in the toolbar
+</ParamField>
+
+<ParamField path="getPage" type="function">
+  Callback function that receives the table instance
+</ParamField>
+
+<ParamField path="checkAlert" type="boolean">
+  When true with `getPage`, shows a "clear alerts" button in toolbar
+</ParamField>
+
+## Usage Examples
+
+### Basic Table
+
+```jsx
+const columns = [
+  { accessorKey: 'id', header: 'ID' },
+  { accessorKey: 'name', header: 'Name' },
+  { accessorKey: 'email', header: 'Email' },
+];
+
+const data = [
+  { id: 1, name: 'John Doe', email: 'john@example.com' },
+  { id: 2, name: 'Jane Smith', email: 'jane@example.com' },
+];
+
+<TableCustom data={data} columns={columns} />
+```
+
+### Table with Pagination and Sorting
+
+```jsx
+<TableCustom 
+  data={data} 
+  columns={columns}
+  pagination={true}
+  pageSize={10}
+  sort={true}
+  orderBy="name"
+/>
+```
+
+### Table with Filtering and Search
+
+```jsx
+<TableCustom 
+  data={data} 
+  columns={columns}
+  topToolbar={true}
+  filter={true}
+  sort={true}
+/>
+```
+
+### Table with Export Features
+
+```jsx
+<TableCustom 
+  data={data} 
+  columns={columns}
+  topToolbar={true}
+  exportExcel={true}
+  exportPdf={true}
+/>
+```
+
+### Table with Row Selection
+
+```jsx
+<TableCustom 
+  data={data} 
+  columns={columns}
+  checkbox={true}
+  topToolbar={true}
+/>
+```
+
+### Table with Grouping
+
+```jsx
+const columns = [
+  { accessorKey: 'department', header: 'Department' },
+  { accessorKey: 'employee', header: 'Employee' },
+  { accessorKey: 'salary', header: 'Salary' },
+];
+
+<TableCustom 
+  data={data} 
+  columns={columns}
+  grouping={true}
+  groupBy="department"
+/>
+```
+
+### Table with Grouped Columns
+
+```jsx
+const columns = [
+  {
+    header: 'Personal Info',
+    columns: [
+      { accessorKey: 'firstName', header: 'First Name' },
+      { accessorKey: 'lastName', header: 'Last Name' },
+    ]
+  },
+  {
+    header: 'Contact',
+    columns: [
+      { accessorKey: 'email', header: 'Email' },
+      { accessorKey: 'phone', header: 'Phone' },
+    ]
+  },
+];
+
+<TableCustom data={data} columns={columns} />
+```
+
+### Table with Conditional Row Styling
+
+```jsx
+const highlightRow = (row) => {
+  return row.original.status === 'alert';
+};
+
+<TableCustom 
+  data={data} 
+  columns={columns}
+  ChangeColorRow={highlightRow}
+/>
+```
+
+### Table with Custom Toolbar Button
+
+```jsx
+const customButton = (
+  <button 
+    onClick={handleCustomAction}
+    className="px-4 py-2 bg-blue-500 text-white rounded"
+  >
+    Custom Action
+  </button>
+);
+
+<TableCustom 
+  data={data} 
+  columns={columns}
+  topToolbar={true}
+  btnCustomToolbar={customButton}
+/>
+```
+
+### Table with Column Visibility Control
+
+```jsx
+const [columnVisibility, setColumnVisibility] = useState({
+  id: false,
+  email: true,
+  name: true,
+});
+
+<TableCustom 
+  data={data} 
+  columns={columns}
+  hide={true}
+  columnVisibility={columnVisibility}
+  onColumnVisibilityChange={setColumnVisibility}
+/>
+```
+
+### Table with Custom Styling
+
+```jsx
+<TableCustom 
+  data={data} 
+  columns={columns}
+  header={{ 
+    backgroundColor: '#f3f4f6',
+    fontWeight: 'bold',
+    fontSize: '14px'
+  }}
+  bodyContent={{
+    fontSize: '13px'
+  }}
+  card={{
+    borderRadius: '12px',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+  }}
+/>
+```
+
+### Full-Featured Table
+
+```jsx
+<TableCustom 
+  data={data} 
+  columns={columns}
+  topToolbar={true}
+  pagination={true}
+  pageSize={20}
+  filter={true}
+  sort={true}
+  hide={true}
+  density={true}
+  copy={true}
+  checkbox={true}
+  exportExcel={true}
+  exportPdf={true}
+  orderBy="createdAt"
+/>
+```
+
+## Column Definition Format
+
+Columns follow the Material React Table format:
+
+```jsx
+const columns = [
+  {
+    accessorKey: 'id',        // Key to access data
+    header: 'ID',             // Display header text
+    size: 80,                 // Optional: column width
+  },
+  {
+    accessorKey: 'createdAt',
+    header: 'Created',
+    Cell: ({ cell }) => {     // Optional: custom cell renderer
+      return new Date(cell.getValue()).toLocaleDateString();
+    },
+  },
+];
+```
+
+## Export Functionality
+
+### Excel/CSV Export
+- Exports all table data including grouped columns
+- Handles nested column headers
+- Formats dates automatically
+- Filename: `Excel-export.csv`
+
+### PDF Export
+- Exports current table data
+- Includes all visible columns
+- Formats dates automatically
+- Filename: `pdf-export.pdf`
+
+## Styling Features
+
+### Row Striping
+Alternating row colors automatically applied:
+- Odd rows: `#f9fafb` background
+- Even rows: `#f1f5f9` background
+- Hover: `#e2e8f0` background
+
+### Responsive Density
+Default density automatically adjusts based on screen width:
+- Mobile (< 750px): `compact`
+- Desktop: `comfortable`
+
+## Localization
+
+Spanish localization included:
+- "Filas por página" for rows per page
+- "Ocultar todo" / "Mostrar todo" for hide/show all columns
+- "Escriba su busqueda" for search placeholder
+
+## Source Location
+
+`/src/components/TableCustom/index.jsx:30`
+
+## Dependencies
+
+```json
+{
+  "material-react-table": "^2.x",
+  "@mui/material": "^5.x",
+  "export-to-csv": "^1.x",
+  "jspdf": "^2.x",
+  "jspdf-autotable": "^3.x",
+  "react-icons": "^4.x"
+}
+```
+
+## Notes
+
+- Empty tables display a custom "NoRegisterTable" component
+- Filter state persists using `storage.get('filter')`
+- Maximum table height is 50000px when pagination is disabled
+- Column actions (three-dot menu) are disabled by default
+- Column dragging is disabled by default
+- Sticky header is enabled for better scrolling experience

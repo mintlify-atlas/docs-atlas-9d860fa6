@@ -1,0 +1,189 @@
+---
+title: Creating Dashboards
+description: Learn how to create and configure dashboard boards to visualize your data
+icon: "chart-mixed"
+---
+
+Dashboards in Mas Agua allow you to combine multiple charts, pump status information, and room monitoring data into unified visualization boards. This guide walks you through creating and configuring dashboard boards.
+
+## Overview
+
+Board charts (dashboards) provide a comprehensive view by combining:
+- Two top charts (liquid fill or circular percentage charts)
+- Pump monitoring section with status and metrics
+- Room status section with up to 4 custom indicators
+
+## Accessing Dashboard Configuration
+
+<Steps>
+  <Step title="Navigate to Charts Management">
+    Go to `/config/allGraphic` to view all existing charts, or click the main **"Crear grafico"** button to create a new one.
+  </Step>
+
+  <Step title="Select Board Chart Type">
+    From the chart type selector at `/config/graphic`, choose **"Board chart"** which displays as "Tablero para visualizacion de gráficos, estados de bombas y estado de sala."
+
+    This will redirect you to `/config/graphic/board`.
+  </Step>
+</Steps>
+
+## Configuring a Dashboard Board
+
+The configuration interface (src/modules/Charts/views/ConfigBoardChart.jsx:418-704) provides a split view with configuration options on the left and a live preview on the right.
+
+### Basic Settings
+
+<Steps>
+  <Step title="Enter Dashboard Title">
+    Provide a descriptive title for your dashboard in the **"Título del tablero"** field. This title will be displayed at the top of the board.
+  </Step>
+
+  <Step title="Set Display Order">
+    Enter a numeric value in **"Orden en el dashboard"** to control where this board appears relative to other charts.
+  </Step>
+</Steps>
+
+### Adding Top Charts
+
+The dashboard can display two charts at the top section:
+
+<Steps>
+  <Step title="Select Left Chart">
+    Choose a chart from the **"Gráfico superior izquierdo"** dropdown. Only `LiquidFillPorcentaje` and `CirclePorcentaje` chart types are available for board charts.
+  </Step>
+
+  <Step title="Select Right Chart">
+    Choose a chart from the **"Gráfico superior derecho"** dropdown using the same available chart types.
+  </Step>
+</Steps>
+
+<Tip>
+  You can leave either or both chart selections empty if you don't need them.
+</Tip>
+
+### Configuring Pump Monitoring
+
+The pump section displays real-time pump status and metrics:
+
+<Steps>
+  <Step title="Select Pump Status Variable">
+    Click the first variable selector under the **"Bombeo"** section to choose the variable that represents the pump's on/off status.
+  </Step>
+
+  <Step title="Configure Runtime Display">
+    - Enter a custom label for runtime in **"Label Tiempo"** (default: "Tiempo de funcionamiento")
+    - Select the InfluxDB variable that tracks pump runtime
+  </Step>
+
+  <Step title="Configure Start Count">
+    - Enter a custom label in **"Label Arranques"** (default: "Cantidad de arranques")
+    - Select the variable that counts pump starts
+  </Step>
+
+  <Step title="Configure Current Readings">
+    For each of the three phases (L1, L2, L3):
+    - Enter custom labels (defaults: "I_L1", "I_L2", "I_L3")
+    - Select the corresponding current measurement variables
+  </Step>
+</Steps>
+
+### Configuring Room Status
+
+The room section displays up to 4 custom status indicators:
+
+<Steps>
+  <Step title="Configure Each Indicator">
+    For each of the 4 room items:
+    
+    1. Enter a descriptive label in **"Label item X"** fields
+       - Item 1 default: "Status electricidad"
+       - Item 2 default: "Status internet"
+       - Item 3 default: "Temperatura"
+       - Item 4 default: "Humedad"
+    
+    2. Click **"Seleccionar variable"** to choose the InfluxDB variable for each indicator
+  </Step>
+</Steps>
+
+<Note>
+  All room indicators are optional. Leave the variable selector empty for any indicators you don't need.
+</Note>
+
+## Saving Your Dashboard
+
+<Steps>
+  <Step title="Review the Preview">
+    Check the live preview on the right side of the screen to ensure your dashboard looks correct.
+  </Step>
+
+  <Step title="Click Save">
+    Click the **"Guardar"** button at the bottom of the configuration form.
+  </Step>
+
+  <Step title="Confirm Success">
+    You'll see a success message: "Tablero creado" for new dashboards or "Tablero editado" for updates.
+  </Step>
+</Steps>
+
+After saving, you'll be redirected to `/config/allGraphic` where you can see your new dashboard in the charts list.
+
+## Editing Existing Dashboards
+
+<Steps>
+  <Step title="Find Your Dashboard">
+    Navigate to `/config/allGraphic` and locate your dashboard in the charts table.
+  </Step>
+
+  <Step title="Click Edit">
+    Click the **"Editar"** button in the dashboard row. The system will route you to `/config/graphic/board/{id}`.
+  </Step>
+
+  <Step title="Modify Settings">
+    Update any configuration values as needed. The preview updates in real-time.
+  </Step>
+
+  <Step title="Save Changes">
+    Click **"Guardar"** to save your modifications.
+  </Step>
+</Steps>
+
+## Viewing Dashboards in Production
+
+Once created and activated:
+
+- Dashboards appear at the `/boards` route (src/modules/Boards/views/index.jsx)
+- Data refreshes automatically every 30 seconds
+- Each dashboard displays in a 6-column grid layout
+- The system fetches real-time values from InfluxDB for all configured variables
+
+<Tip>
+  Create multiple dashboard boards to organize different monitoring areas or systems. Each board can focus on specific equipment or locations.
+</Tip>
+
+## Best Practices
+
+<Warning>
+  Ensure all selected variables exist in your InfluxDB database and are actively receiving data, otherwise indicators will show "Sin Datos" (No Data).
+</Warning>
+
+- Use clear, descriptive titles that indicate what the dashboard monitors
+- Group related metrics together (e.g., all metrics for one pump system)
+- Choose meaningful labels that operators will easily understand
+- Test variable selections to ensure data is flowing correctly
+- Set logical display orders to organize dashboards by priority or system
+
+## Troubleshooting
+
+**Dashboard shows "Sin Datos"**
+- Verify the InfluxDB variables are configured correctly
+- Check that data is actively being written to the selected variables
+- Ensure variables have the correct permissions
+
+**Charts not appearing in selector**
+- Only `LiquidFillPorcentaje` and `CirclePorcentaje` chart types can be used
+- Ensure the charts are active (status = true)
+- Create the required chart types first if they don't exist
+
+**Preview not updating**
+- The preview uses placeholder data ("Sin Datos") for demonstration
+- Actual data will appear once the dashboard is saved and viewed at `/boards`

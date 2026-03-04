@@ -1,0 +1,659 @@
+---
+title: Maps
+description: Geographic visualization with MapLibre GL showing real-time data at geo-located markers
+---
+
+## Overview
+
+Mas Agua's mapping feature provides geographic visualization of water infrastructure using MapLibre GL JS. Display real-time sensor data, pump stations, and tank locations on interactive maps with customizable markers and popups.
+
+<img src="/images/map-overview.png" alt="Map showing water infrastructure markers" />
+
+## Key Features
+
+- **MapLibre GL**: Open-source map rendering with vector tiles
+- **Real-time Data**: 15-second refresh interval for marker values
+- **Interactive Markers**: Draggable pins with custom labels
+- **Popup Information**: Live data display in map popups
+- **Navigation Controls**: Zoom, pan, rotate, and tilt
+- **Geolocation**: User location tracking
+- **Fullscreen Mode**: Expand map to full screen
+
+## Map Components
+
+### MapBase Component
+
+Core map rendering component with configurable controls:
+
+```jsx
+import MapBase from './components/MapBase'
+
+<MapBase
+  height="100%"
+  width="100%"
+  navigationcontrol={true}
+  fullScreen={true}
+  geolocation={true}
+  controlPanel={false}
+  markers={markers}
+  setMarkers={setMarkers}
+  viewState={viewState}
+  setViewState={setViewState}
+  draggable={false}
+  withInfo={true}
+/>
+```
+
+### Props Reference
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `navigationcontrol` | boolean | true | Show zoom/rotate controls |
+| `height` | string | '100%' | Map container height |
+| `width` | string | '100%' | Map container width |
+| `fullScreen` | boolean | true | Show fullscreen button |
+| `geolocation` | boolean | true | Show locate user button |
+| `controlPanel` | boolean | true | Show marker control panel |
+| `markers` | array | [] | Array of marker objects |
+| `setMarkers` | function | - | Update markers state |
+| `viewState` | object | - | Map viewport state |
+| `setViewState` | function | - | Update viewport state |
+| `draggable` | boolean | false | Allow marker dragging |
+| `withInfo` | boolean | false | Fetch and display real-time data |
+
+## Map Configuration
+
+### View State
+
+Defines the map's viewport:
+
+```javascript
+const [viewState, setViewState] = useState({
+  longitude: -62.005196197872266,
+  latitude: -30.716256365145455,
+  zoom: 14,
+  bearing: 0,    // Map rotation (0-360°)
+  pitch: 0,      // Map tilt (0-60°)
+})
+```
+
+### Map Style
+
+Using MapTiler vector tiles:
+
+```jsx
+<Map
+  {...viewState}
+  style={{ width, height }}
+  mapStyle="https://api.maptiler.com/maps/streets/style.json?key=mHpRzO9eugI7vKv1drLO"
+  onMove={(e) => setViewState(e.viewState)}
+>
+  {/* Map controls and markers */}
+</Map>
+```
+
+## Markers
+
+### Marker Structure
+
+```javascript
+const marker = {
+  name: 'Tanque Principal',
+  latitude: -30.716256,
+  longitude: -62.005196,
+  popupInfo: {
+    lat: -30.716256,
+    lng: -62.005196,
+    idVar: 15,
+    data: {
+      id: 15,
+      name: 'nivel_tanque_01',
+      unit: '%',
+      varsInflux: {
+        tank_level: {
+          calc_field: 'nivel',
+          measure: 'tanques'
+        }
+      }
+    },
+    value: '78.5 %'  // Updated in real-time
+  }
+}
+```
+
+### Adding Markers
+
+Markers are added through a form interface:
+
+```jsx
+<TextField
+  {...register('markerName', {
+    required: 'Debe dar un nombre al marcador',
+    validate: (value) =>
+      !markers.some((marker) => marker.name === value) ||
+      'El marcador ya existe',
+  })}
+  label="Nombre del marcador"
+/>
+
+<TextField
+  {...register('markerLat', {
+    required: 'Debe asignar una latitud',
+  })}
+  label="Latitud"
+/>
+
+<TextField
+  {...register('markerLng', {
+    required: 'Debe asignar una longitud',
+  })}
+  label="Longitud"
+/>
+
+<SelectVars
+  setValue={setValue}
+  label="Seleccione una variable"
+/>
+
+<Button onClick={saveMarker}>
+  Agregar Marcador
+</Button>
+```
+
+### Generating Markers
+
+```javascript
+const generateMarker = (name, lat, lng, idVar, data) => {
+  return {
+    name,
+    latitude: parseFloat(lat),
+    longitude: parseFloat(lng),
+    popupInfo: {
+      lat: parseFloat(lat),
+      lng: parseFloat(lng),
+      idVar: idVar,
+      data: data || null,
+    },
+  }
+}
+```
+
+## Real-time Data Updates
+
+### Automatic Refresh
+
+Markers update their values every 15 seconds when `withInfo={true}`:
+
+```javascript
+useEffect(() => {
+  if (!withInfo) return
+
+  fetchMultipleInfluxValues()
+
+  const interval = setInterval(
+    fetchMultipleInfluxValues,
+    15000  // 15 seconds
+  )
+  
+  return () => clearInterval(interval)
+}, [])
+```
+
+### Fetching Marker Data
+
+```javascript
+const fetchMultipleInfluxValues = async () => {
+  if (!markers || markers.length === 0) return
+
+  // Extract InfluxDB variables from all markers
+  const vars = extractInfluxVarsFromMarkers(markers)
+
+  try {
+    const { data } = await request(
+      `${backend[import.meta.env.VITE_APP_NAME]}/multipleDataInflux`,
+      'POST',
+      vars
+    )
+
+    // Update markers with new values
+    const updated = markers.map((marker) => {
+      const id = marker.popupInfo.data.id
+      const value = data[id] ?? 'Sin datos'
+
+      return {
+        ...marker,
+        popupInfo: {
+          ...marker.popupInfo,
+          value: `${value} ${marker.popupInfo.data.unit ?? ''}`
+        }
+      }
+    })
+
+    setMarkers(updated)
+
+  } catch (error) {
+    console.error("Error múltiples influx en mapa:", error)
+  }
+}
+```
+
+### Variable Extraction
+
+```javascript
+function extractInfluxVarsFromMarkers(markers) {
+  return markers.map((m) => ({
+    dataInflux: m.popupInfo.data  // The complete InfluxDB config
+  }))
+}
+```
+
+## Popups
+
+### Popup Display
+
+Popups show marker name and real-time value:
+
+```jsx
+{withInfo && marker.popupInfo && marker.popupInfo.data && (
+  <Popup
+    anchor="top-left"
+    closeButton={false}
+    latitude={Number(marker.popupInfo.lat)}
+    longitude={Number(marker.popupInfo.lng)}
+    closeOnClick={false}
+    className="!rounded-xl !shadow-md"
+  >
+    <Typography variant="body3">
+      {marker.popupInfo.data.name ?? 'No hay datos'}
+    </Typography>
+    <Typography variant="body2">
+      {formatMarkerValue(marker)}
+    </Typography>
+  </Popup>
+)}
+```
+
+### Status Field Formatting
+
+Boolean status fields are interpreted as on/off:
+
+```javascript
+const formatMarkerValue = (marker) => {
+  const rawValue = marker.popupInfo.value
+
+  if (rawValue == null) return "No hay datos"
+
+  // Get calc_field from InfluxDB config
+  const influxConfig = Object.values(
+    marker.popupInfo.data.varsInflux
+  )[0]
+  const calcField = influxConfig.calc_field
+
+  // Interpret status fields as binary
+  if (
+    calcField === "status" ||
+    calcField === "estados_0" ||
+    calcField.includes("estado")
+  ) {
+    const numeric = Number(rawValue)
+    return numeric === 1 ? "Encendido" : "Apagado"
+  }
+
+  // Return numeric value with unit
+  return rawValue
+}
+```
+
+## Pin Component
+
+Custom pin marker with label:
+
+```jsx
+import Pin from './components/Pin'
+
+<Pin 
+  label="Tanque Norte"
+  color="#3498db"
+/>
+```
+
+## Draggable Markers
+
+When `draggable={true}`, markers can be repositioned:
+
+```jsx
+<Marker
+  longitude={marker.longitude}
+  latitude={marker.latitude}
+  draggable={draggable}
+  onDragEnd={(e) => {
+    const { lng, lat } = e.lngLat
+    const updatedMarkers = markers.map((m, i) =>
+      i === index
+        ? { ...m, longitude: lng, latitude: lat }
+        : m
+    )
+    setMarkers(updatedMarkers)
+  }}
+>
+  <Pin label={marker.name} color="#3498db" />
+</Marker>
+```
+
+## Map Controls
+
+### Navigation Control
+
+Zoom and rotation buttons:
+
+```jsx
+import { NavigationControl } from 'react-map-gl/maplibre'
+
+<NavigationControl position="top-left" />
+```
+
+### Fullscreen Control
+
+Expand map to fullscreen:
+
+```jsx
+import { FullscreenControl } from 'react-map-gl/maplibre'
+
+<FullscreenControl position="top-left" />
+```
+
+### Geolocation Control
+
+Locate user position:
+
+```jsx
+import { GeolocateControl } from 'react-map-gl/maplibre'
+
+<GeolocateControl position="top-left" />
+```
+
+## Control Panel
+
+Optional marker management panel when `controlPanel={true}`:
+
+```jsx
+import ControlPanel from './components/ControlPanel'
+
+<ControlPanel 
+  markers={markers}
+  setMarkers={setMarkers}
+/>
+```
+
+## Saving Maps
+
+Maps are saved to the backend with all configuration:
+
+```javascript
+const handleSubmit = async () => {
+  if (!markers || markers.length === 0) {
+    await Swal.fire({
+      icon: 'error',
+      title: 'Atención!',
+      html: '<h3>Debe haber al menos un marcador</h3>',
+    })
+    return
+  }
+  
+  const mapName = await askMapName()
+  if (!mapName) return
+
+  const map = {
+    name: mapName,
+    viewState,
+    markers,
+  }
+
+  const result = await saveMap(map)
+  
+  if (result) {
+    await Swal.fire({
+      title: 'Éxito',
+      icon: 'success',
+      html: '<h3>El mapa se guardó con éxito</h3>',
+    })
+    navigate('/maps')
+  }
+}
+```
+
+### Save API
+
+```javascript
+const saveMap = async (map) => {
+  const url = `${backend[import.meta.env.VITE_APP_NAME]}/map`
+  const result = await request(url, 'POST', map)
+  return result
+}
+```
+
+## Loading Maps
+
+Load existing map configuration:
+
+```javascript
+const searchMap = async (id) => {
+  try {
+    const url = `${backend[import.meta.env.VITE_APP_NAME]}/map?id=${id}`
+    const { data } = await request(url, 'GET')
+
+    setNameMap(data[0].name)
+    
+    // Restore view state
+    const viewStateObject = {
+      longitude: Number(data[0].longitude),
+      latitude: Number(data[0].latitude),
+      zoom: Number(data[0].zoom),
+      bearing: Number(data[0].bearing),
+      pitch: Number(data[0].pitch),
+    }
+    setViewState(viewStateObject)
+    
+    // Restore markers
+    const markers = data[0].MarkersMaps.map((markerMap) => {
+      return generateMarker(
+        markerMap.name,
+        markerMap.latitude,
+        markerMap.longitude,
+        markerMap.PopUpsMarkers.idVar,
+        markerMap.PopUpsMarkers.InfluxVar
+      )
+    })
+
+    setMarkers(markers)
+  } catch (error) {
+    console.error('Error loading map:', error)
+  }
+}
+```
+
+## Map Views
+
+### View-Only Mode
+
+Display saved map with real-time data:
+
+```jsx
+<MapView 
+  create={false}
+  search={true}
+/>
+```
+
+### Edit Mode
+
+Edit existing map configuration:
+
+```jsx
+<MapView 
+  create={true}
+  search={true}
+/>
+```
+
+### Create Mode
+
+Create new map:
+
+```jsx
+<MapView 
+  create={true}
+  search={false}
+/>
+```
+
+## Responsive Layout
+
+```jsx
+<div className="w-full h-[88vh] flex flex-col gap-1">
+  {create && (
+    <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
+      <FormLabel className="w-full text-center !text-3xl">
+        {create && search ? 'Editar Mapa' : 'Crear Mapa'}
+      </FormLabel>
+      <Button onClick={handleSubmit} color="success">
+        Guardar
+      </Button>
+    </div>
+  )}
+  
+  <CardCustom className="p-3 rounded-xl flex-1">
+    <MapBase
+      height="100%"
+      markers={markers}
+      setMarkers={setMarkers}
+      viewState={viewState}
+      setViewState={setViewState}
+      controlPanel={create}
+      draggable={create}
+      withInfo={!create}
+    />
+  </CardCustom>
+</div>
+```
+
+## Use Cases
+
+### Water Distribution Network
+
+Map showing pressure sensors across the network:
+
+```javascript
+const markers = [
+  {
+    name: 'Presión Norte',
+    latitude: -30.715,
+    longitude: -62.004,
+    popupInfo: {
+      data: {
+        name: 'presion_norte',
+        unit: 'PSI',
+        varsInflux: { pressure: { calc_field: 'presion', measure: 'sensores' }}
+      }
+    }
+  },
+  // More markers...
+]
+```
+
+### Tank Monitoring
+
+Tank locations with level indicators:
+
+```javascript
+const markers = [
+  {
+    name: 'Tanque Elevado',
+    latitude: -30.720,
+    longitude: -62.010,
+    popupInfo: {
+      data: {
+        name: 'nivel_tanque_01',
+        unit: '%',
+        varsInflux: { level: { calc_field: 'nivel', measure: 'tanques' }}
+      }
+    }
+  },
+]
+```
+
+### Pump Stations
+
+Pump locations with on/off status:
+
+```javascript
+const markers = [
+  {
+    name: 'Estación Bombeo 1',
+    latitude: -30.718,
+    longitude: -62.008,
+    popupInfo: {
+      data: {
+        name: 'bomba_principal',
+        unit: '',
+        varsInflux: { status: { calc_field: 'status', measure: 'bombas' }}
+      }
+    }
+  },
+]
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Marker Density">
+    - Keep markers under 50 per map for performance
+    - Use clustering for dense areas (future feature)
+    - Split large networks into regional maps
+  </Accordion>
+
+  <Accordion title="Data Refresh">
+    - 15-second interval is optimal for real-time monitoring
+    - Disable real-time updates (`withInfo={false}`) for static maps
+    - Monitor network usage with many markers
+  </Accordion>
+
+  <Accordion title="Map Styling">
+    - Use consistent marker colors for similar asset types
+    - Consider using custom icons for different infrastructure
+    - Keep popup information concise
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+### Markers Not Updating
+
+1. Check `withInfo={true}` is set
+2. Verify InfluxDB variable configuration in markers
+3. Check browser console for API errors
+4. Confirm 15-second refresh interval is running
+
+### Map Not Loading
+
+1. Verify MapTiler API key is valid
+2. Check internet connection
+3. Confirm `react-map-gl` and `maplibre-gl` versions
+4. Check browser console for WebGL errors
+
+### Dragging Issues
+
+1. Ensure `draggable={true}` is set on MapBase
+2. Check markers have unique IDs
+3. Verify `setMarkers` function is provided
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Dashboard" icon="gauge" href="/features/dashboard">
+    Display map data in dashboard charts
+  </Card>
+  <Card title="Diagram Editor" icon="diagram-project" href="/features/diagram-editor">
+    Create visual network diagrams
+  </Card>
+</CardGroup>

@@ -1,80 +1,321 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start
+description: Create your first Mas Agua dashboard and start monitoring water systems in minutes
 ---
 
-## Get started in three steps
+This guide walks you through setting up your first dashboard in Mas Agua, from logging in to visualizing real-time data.
 
-Get your documentation site running locally and make your first customization.
+## Before You Begin
 
-### Step 1: Set up your local environment
+Ensure you have:
+
+- Mas Agua installed and running (see [Installation](/installation))
+- Backend API server configured and accessible
+- InfluxDB instance with data available
+- User credentials for login
+
+## Step 1: Login and Access
+
+<Steps>
+  <Step title="Navigate to the application">
+    Open Mas Agua in your browser or launch the desktop application.
+  </Step>
+  
+  <Step title="Log in with your credentials">
+    Enter your username and password on the login screen.
+    
+    <Note>
+    First-time users should contact their system administrator for credentials and permissions.
+    </Note>
+  </Step>
+  
+  <Step title="Access the home dashboard">
+    After successful login, you'll be directed to the home dashboard at `/home`.
+  </Step>
+</Steps>
+
+## Step 2: Understanding the Home Dashboard
+
+The home dashboard displays configured chart widgets that automatically update every 30 seconds with real-time data from InfluxDB.
+
+### Available Chart Types
+
+Mas Agua supports several chart components:
+
+| Chart Type | Purpose | Example Use Case |
+|------------|---------|------------------|
+| `LiquidFillPorcentaje` | Tank level visualization | Water reservoir levels |
+| `GaugeSpeed` | Gauge display | Pressure or flow rate |
+| `CirclePorcentaje` | Circular percentage | Pump efficiency |
+| `BooleanChart` | On/Off indicator | Valve status |
+| `MultipleBooleanChart` | Multiple LED indicators | System status panel |
+| `PieChart` | Distribution chart | Water usage by zone |
+| `BarDataSet` | Bar chart | Daily consumption |
+| `PumpControl` | Pump control panel | Pump station monitoring |
+
+### How Data Updates Work
+
+The home dashboard fetches data automatically:
+
+```javascript
+// Data fetches every 30 seconds
+const intervalRef = useRef(null)
+intervalRef.current = setInterval(() => 
+  fetchMultipleData(allVars), 
+  30000 // 30 seconds
+)
+```
+
+<Info>
+All chart widgets on the home screen update simultaneously using a single API call to optimize performance.
+</Info>
+
+## Step 3: Creating Your First Chart
+
+<Steps>
+  <Step title="Navigate to chart configuration">
+    From the navigation menu, go to **Config** → **Graphic**
+    
+    This opens the chart type selector at `/config/graphic`
+  </Step>
+  
+  <Step title="Select a chart type">
+    Choose from available chart types:
+    
+    - **Boolean Chart** - For on/off indicators
+    - **Pie Chart** - For distribution data
+    - **Gauge/Liquid Fill** - For percentage/level data
+    - **Multiple Boolean** - For multi-indicator panels
+    - **Board Chart** - For custom board layouts
+  </Step>
+  
+  <Step title="Configure chart properties">
+    Each chart type has specific configuration options:
+    
+    **Common properties:**
+    - **Title** - Display name for the chart
+    - **InfluxDB Variable** - Data source variable
+    - **Update Interval** - Data refresh rate
+    - **Visual Settings** - Colors, sizes, labels
+    
+    **Example: Boolean Chart**
+    - Text for ON state
+    - Text for OFF state
+    - Colors for each state
+    - Associated InfluxDB variable
+  </Step>
+  
+  <Step title="Link InfluxDB variables">
+    Connect your chart to data sources:
+    
+    1. Select the InfluxDB variable from your configured variables
+    2. Choose aggregation type: `last`, `mean`, `sum`, etc.
+    3. Set calculation options if using formulas
+    
+    <Warning>
+    Ensure your InfluxDB variables are properly configured in **Config** → **Vars** before creating charts.
+    </Warning>
+  </Step>
+  
+  <Step title="Save and view">
+    Click **Save** to create the chart. It will appear on your home dashboard on the next page load.
+  </Step>
+</Steps>
+
+## Step 4: Exploring the Dashboard View
+
+Navigate to **Dashboard** (`/chart`) to view detailed time-series charts.
+
+### Dashboard Features
+
+```javascript
+// Dashboard loads chart configurations
+const fetchSeriesCharts = async () => {
+  const url = `${backend[import.meta.env.VITE_APP_NAME]}/dashboardCharts`
+  const { data } = await request(url, 'GET')
+  setCharts(data)
+}
+```
+
+The dashboard view provides:
+
+- Historical data visualization
+- Expandable chart accordions
+- Time range selection
+- Data export capabilities
+
+<Tip>
+Dashboard charts are different from home widgets. Home widgets show current values, while dashboard charts show historical trends.
+</Tip>
+
+## Step 5: Setting Up Alarms
+
+Monitor critical conditions with the alarm system.
+
+<Steps>
+  <Step title="Configure alarms">
+    Go to **Config** → **Alarm** to create alarm rules:
+    
+    - Define trigger conditions
+    - Set threshold values
+    - Configure notification recipients
+  </Step>
+  
+  <Step title="View active alarms">
+    Navigate to **Alert** (`/alert`) to see all alarms:
+    
+    ```javascript
+    // Fetch alarm list
+    const { data } = await request(`${url}/listAlerts`, 'GET')
+    ```
+    
+    Alarms display:
+    - Timestamp
+    - Alarm message
+    - Read/unread status
+    - Severity level
+  </Step>
+  
+  <Step title="Mark alarms as read">
+    Click on unread alarms to acknowledge them. Unread alarms appear highlighted.
+  </Step>
+</Steps>
+
+## Step 6: Creating System Diagrams
+
+Visualize your water system with interactive diagrams.
+
+<Steps>
+  <Step title="Access diagram editor">
+    Navigate to **Config** → **Diagram** → **New Diagram**
+  </Step>
+  
+  <Step title="Build your diagram">
+    Use the diagram editor tools:
+    
+    - **Image Selector** - Add pumps, valves, tanks from library
+    - **Drawing Tools** - Create custom shapes and lines
+    - **Text Tool** - Add labels and annotations
+    - **Field Tool** - Link real-time data to diagram elements
+    
+    ```javascript
+    // Diagram supports multiple element types
+    const [circles, setCircles] = useState([])     // Shapes
+    const [images, setImages] = useState([])       // Images
+    const [texts, setTexts] = useState([])         // Labels
+    const [fields, setFields] = useState([])       // Data fields
+    ```
+  </Step>
+  
+  <Step title="Add real-time data overlays">
+    Link InfluxDB variables to diagram elements to show live values on the diagram.
+  </Step>
+  
+  <Step title="Save and view">
+    Save your diagram and view it at `/viewDiagram/:id` for real-time monitoring.
+  </Step>
+</Steps>
+
+## Step 7: Working with Maps
+
+Map your infrastructure geographically.
+
+<Steps>
+  <Step title="Create a new map">
+    Go to **Map** → **Create** (`/map/create`)
+  </Step>
+  
+  <Step title="Add markers">
+    Place markers at infrastructure locations:
+    
+    ```javascript
+    const generateMarker = (name, lat, lng, idVar, data) => {
+      return {
+        name,
+        latitude: parseFloat(lat),
+        longitude: parseFloat(lng),
+        popupInfo: {
+          lat: parseFloat(lat),
+          lng: parseFloat(lng),
+          idVar: idVar,
+          data: data || null,
+        },
+      }
+    }
+    ```
+  </Step>
+  
+  <Step title="Link data to markers">
+    Associate InfluxDB variables with map markers to display real-time status and values.
+  </Step>
+  
+  <Step title="View your map">
+    Navigate to **Maps** (`/maps`) to see all created maps with live data updates.
+  </Step>
+</Steps>
+
+## Common Workflows
 
 <AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
+  <Accordion title="Monitoring pump operations">
+    1. Create a `PumpControl` chart on the home dashboard
+    2. Link pump status and runtime variables from InfluxDB
+    3. Configure alarm thresholds for pump failures
+    4. View pump table at `/list/pumps` for detailed status
   </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
+  
+  <Accordion title="Tracking tank levels">
+    1. Create a `LiquidFillPorcentaje` chart
+    2. Connect to tank level sensor variable
+    3. Set high/low level alarms
+    4. Add tank location to map with linked data
+  </Accordion>
+  
+  <Accordion title="Creating a system overview">
+    1. Build a diagram showing your complete system layout
+    2. Add real-time data fields for key metrics
+    3. Create a `MultipleBooleanChart` for system status
+    4. Set up critical alarms for system failures
+  </Accordion>
+  
+  <Accordion title="Analyzing historical trends">
+    1. Navigate to Dashboard view (`/chart`)
+    2. Select time range for analysis
+    3. Compare multiple variables on same chart
+    4. Export data for external analysis
   </Accordion>
 </AccordionGroup>
 
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
+## Tips for Success
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Start Simple" icon="seedling">
+    Begin with a few basic charts and gradually add complexity as you become familiar with the platform.
+  </Card>
+  
+  <Card title="Organize Variables" icon="folder-tree">
+    Properly configure and name your InfluxDB variables in **Config** → **Vars** before creating charts.
+  </Card>
+  
+  <Card title="Use Meaningful Names" icon="tag">
+    Give charts, diagrams, and maps descriptive names to make navigation easier.
+  </Card>
+  
+  <Card title="Test Alarms" icon="bell">
+    Verify alarm configurations trigger correctly before relying on them for critical monitoring.
+  </Card>
 </CardGroup>
 
+## Next Steps
+
+Now that you have your first dashboard running:
+
+- Explore advanced chart configurations
+- Set up user permissions in **Config** → **Security**
+- Create custom menu structures in **Config** → **Menu**
+- Configure system notifications
+- Build comprehensive system diagrams
+
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+For detailed configuration options and advanced features, refer to the specific component documentation sections.
 </Note>

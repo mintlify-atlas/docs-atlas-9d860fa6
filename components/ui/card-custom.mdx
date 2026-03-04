@@ -1,0 +1,151 @@
+---
+title: CardCustom
+description: A Material-UI Box-based card container component with dark mode support
+---
+
+## Overview
+
+CardCustom is a wrapper component built on Material-UI's Box component that provides a consistent card container with shadow styling and dark mode support. It's designed to be used as a container for content sections throughout the application.
+
+## Import
+
+```jsx
+import CardCustom from '@/components/CardCustom';
+```
+
+## Material-UI Integration
+
+This component wraps Material-UI's `Box` component and inherits all of its properties and behaviors.
+
+```jsx
+import { Box } from "@mui/material";
+```
+
+## Props
+
+<ParamField path="children" type="ReactNode" required>
+  The content to be rendered inside the card container
+</ParamField>
+
+<ParamField path="className" type="string">
+  Additional CSS classes to apply to the card. These classes are appended to the default styling
+</ParamField>
+
+## Default Styling
+
+The component applies the following classes by default:
+
+- `bg-white` - White background in light mode
+- `dark:bg-zinc-700` - Zinc-700 background in dark mode
+- `shadow-[2px_3px_5px_0px_#0000001f]` - Custom shadow (2px horizontal, 3px vertical, 5px blur, 0px spread, with 12% opacity black)
+
+## Usage Examples
+
+### Basic Card
+
+```jsx
+<CardCustom>
+  <h2>Card Title</h2>
+  <p>Card content goes here</p>
+</CardCustom>
+```
+
+### Card with Custom Padding
+
+```jsx
+<CardCustom className="p-6">
+  <h2 className="text-xl font-bold mb-4">Dashboard Summary</h2>
+  <div className="space-y-2">
+    <p>Total Users: 1,234</p>
+    <p>Active Sessions: 56</p>
+  </div>
+</CardCustom>
+```
+
+### Card with Border Radius
+
+```jsx
+<CardCustom className="rounded-lg p-4">
+  <h3 className="font-semibold">Notification</h3>
+  <p className="text-sm text-gray-600 dark:text-gray-300">
+    Your profile has been updated successfully.
+  </p>
+</CardCustom>
+```
+
+### Nested Cards Layout
+
+```jsx
+<div className="grid grid-cols-2 gap-4">
+  <CardCustom className="p-6">
+    <h3 className="text-lg font-bold mb-2">Card 1</h3>
+    <p>Content for first card</p>
+  </CardCustom>
+  
+  <CardCustom className="p-6">
+    <h3 className="text-lg font-bold mb-2">Card 2</h3>
+    <p>Content for second card</p>
+  </CardCustom>
+</div>
+```
+
+### Card as Form Container
+
+```jsx
+<CardCustom className="max-w-md mx-auto p-8 rounded-xl">
+  <h2 className="text-2xl font-bold mb-6">Login</h2>
+  <form>
+    <input 
+      type="email" 
+      placeholder="Email" 
+      className="w-full mb-4 p-2 border rounded"
+    />
+    <input 
+      type="password" 
+      placeholder="Password" 
+      className="w-full mb-4 p-2 border rounded"
+    />
+    <button className="w-full bg-blue-500 text-white py-2 rounded">
+      Sign In
+    </button>
+  </form>
+</CardCustom>
+```
+
+### Card with Custom Background
+
+```jsx
+<CardCustom className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-8">
+  <h2 className="text-2xl font-bold">Featured Content</h2>
+  <p className="mt-2">Special announcement or highlighted information</p>
+</CardCustom>
+```
+
+## Dark Mode Support
+
+The component automatically adapts to dark mode using Tailwind's dark mode classes:
+
+- Light mode: White background (`bg-white`)
+- Dark mode: Zinc-700 background (`dark:bg-zinc-700`)
+
+Ensure your Tailwind configuration has dark mode enabled:
+
+```js
+// tailwind.config.js
+module.exports = {
+  darkMode: 'class', // or 'media'
+  // ...
+}
+```
+
+## Source Location
+
+`/src/components/CardCustom/index.jsx`
+
+## Notes
+
+- Built on Material-UI's Box component, inheriting its flexibility and props
+- Uses Tailwind CSS for styling with dark mode support
+- Custom shadow value provides subtle depth to cards
+- Additional classes can be passed to extend or override default styling
+- The `??` nullish coalescing operator ensures empty string if className is null/undefined

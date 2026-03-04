@@ -1,0 +1,397 @@
+---
+title: 'LineChart'
+description: 'Time series line chart with zoom, data export, and multiple series support'
+icon: 'chart-line'
+---
+
+The `LineChart` component renders interactive time-series line charts using Apache ECharts. It features zoom controls, data table view, mobile responsiveness, and support for multiple series.
+
+## Basic Usage
+
+```jsx
+import LineChart from '@/modules/Charts/components/LineChart'
+
+const xSeries = [1709539200000, 1709542800000, 1709546400000] // Unix timestamps (ms)
+const ySeries = [
+  {
+    name: 'Temperature',
+    data: [23.5, 24.1, 23.8],
+    color: '#ef4444',
+    areaStyle: true
+  }
+]
+
+<LineChart
+  xSeries={xSeries}
+  ySeries={ySeries}
+/>
+```
+
+## Props
+
+<ParamField path="xSeries" type="number[]" required>
+  Array of Unix timestamps in milliseconds for the x-axis (time axis).
+</ParamField>
+
+<ParamField path="ySeries" type="object[]" required>
+  Array of series objects. Each series should have:
+  - `name` (string) - Series label for legend
+  - `data` (number[]) - Array of y-values matching x-axis length
+  - `color` (string, optional) - Line color
+  - `areaStyle` (boolean, optional) - Fill area under line
+  - Additional ECharts line series options
+</ParamField>
+
+<ParamField path="yType" type="string" default="value">
+  Y-axis type. Options: `"value"`, `"log"`. Use `"log"` for logarithmic scale.
+</ParamField>
+
+<ParamField path="onZoomRange" type="function">
+  Callback fired when user zooms. Receives `{ startMs, endMs }` with selected time range.
+</ParamField>
+
+<ParamField path="onRestore" type="function">
+  Callback fired when user clicks restore button to reset zoom.
+</ParamField>
+
+## Examples
+
+### Single Series
+
+```jsx
+const timestamps = [
+  1709539200000, // 2024-03-04 08:00:00
+  1709542800000, // 2024-03-04 09:00:00
+  1709546400000, // 2024-03-04 10:00:00
+  1709550000000  // 2024-03-04 11:00:00
+]
+
+const series = [{
+  name: 'Flow Rate',
+  data: [125.5, 130.2, 128.7, 131.5],
+  color: '#3b82f6'
+}]
+
+<LineChart
+  xSeries={timestamps}
+  ySeries={series}
+/>
+```
+
+### Multiple Series
+
+```jsx
+const timestamps = [1709539200000, 1709542800000, 1709546400000]
+
+const series = [
+  {
+    name: 'Inlet Pressure',
+    data: [45.2, 46.1, 45.8],
+    color: '#10b981',
+    areaStyle: true
+  },
+  {
+    name: 'Outlet Pressure',
+    data: [38.5, 39.2, 38.9],
+    color: '#f59e0b',
+    areaStyle: true
+  }
+]
+
+<LineChart
+  xSeries={timestamps}
+  ySeries={series}
+/>
+```
+
+### With Zoom Callbacks
+
+```jsx
+function MyChart() {
+  const handleZoom = ({ startMs, endMs }) => {
+    console.log('Zoomed to:', new Date(startMs), new Date(endMs))
+    // Fetch data for zoomed range
+  }
+
+  const handleRestore = () => {
+    console.log('Zoom reset')
+    // Reload full dataset
+  }
+
+  return (
+    <LineChart
+      xSeries={timestamps}
+      ySeries={series}
+      onZoomRange={handleZoom}
+      onRestore={handleRestore}
+    />
+  )
+}
+```
+
+### With Null Values
+
+```jsx
+const series = [{
+  name: 'Sensor Reading',
+  data: [23.5, 24.1, null, 23.8, null, 24.5],  // Gaps in data
+  color: '#6366f1'
+}]
+
+<LineChart xSeries={timestamps} ySeries={series} />
+```
+
+Null values create gaps, but lines connect across them (`connectNulls: true`).
+
+## Time Formatting
+
+### Axis Labels
+
+X-axis labels show time and date:
+
+```
+14:23:45
+04/03/2024
+```
+
+Timezone: `America/Argentina/Buenos_Aires`
+
+### Tooltip
+
+Hover tooltips show:
+
+```
+04/03/2024, 14:23:45
+● Temperature: 23.5
+● Pressure: 45.2
+```
+
+### Data Table View
+
+Click **Tabla** button to see data in table format:
+
+| Fecha | Temperature | Pressure |
+|-------|-------------|----------|
+| 04/03/2024, 14:23:45 | 23.5 | 45.2 |
+| 04/03/2024, 14:24:00 | 24.1 | 46.1 |
+
+## Features
+
+### Zoom Controls
+
+**Inside Zoom** (z-index layer):
+- Drag to pan horizontally
+- Mouse move to navigate (no scroll zoom)
+- Minimum zoom: 2 minutes
+
+**Slider Zoom** (bottom):
+- Drag handles to select range
+- Shows data shadow
+- 28px height
+- Positioned at bottom (adjusted for mobile)
+
+### Toolbox
+
+Interactive tools in top-right:
+
+1. **Data Zoom**: Enable zoom mode
+2. **Tabla**: View data as table
+3. **Restablecer**: Reset to original view
+4. **Guardar imagen**: Download as PNG (filename: "Gráfico +Agua")
+
+### Mobile Responsiveness
+
+Detects mobile screens (`max-width: 768px`):
+
+**Mobile adjustments**:
+- Legend at bottom with scroll, smaller icons
+- Reduced x-axis split numbers (6 vs 12)
+- Increased label rotation (35° vs 20°)
+- Toolbox centered, larger icons (18px)
+- Slider zoom higher position (bottom: 5)
+- Reduced top/bottom grid margins
+
+**Desktop**:
+- Horizontal legend at top
+- More x-axis labels
+- Standard toolbox (top-right)
+
+### Area Fill
+
+Enable area fill under line:
+
+```jsx
+const series = [{
+  name: 'Value',
+  data: [10, 20, 15],
+  areaStyle: true  // Enables fill
+}]
+```
+
+Area opacity: 0.15 (15%)
+
+## Data Processing
+
+The component internally transforms data:
+
+```javascript
+// Input
+xSeries: [t1, t2, t3]
+ySeries: [{ name: 'A', data: [v1, v2, v3] }]
+
+// Transformed to
+series: [{
+  type: 'line',
+  name: 'A',
+  data: [[t1, v1], [t2, v2], [t3, v3]],
+  connectNulls: true,
+  showSymbol: true,
+  symbolSize: 2
+}]
+```
+
+Each data point becomes `[timestamp, value]`.
+
+## Empty Value Handling
+
+```javascript
+const isEmptyValue = (v) =>
+  v === null || v === undefined || v === '-' || Number.isNaN(v)
+```
+
+**Behavior**:
+- Empty values show as "Sin datos" in tooltips/table
+- Lines connect across gaps (`connectNulls: true`)
+- Points still render (symbol size: 2px)
+
+## Callbacks
+
+### onZoomRange
+
+Fired when zoom changes:
+
+```javascript
+onZoomRange({ startMs, endMs }) {
+  // startMs: Start timestamp (number)
+  // endMs: End timestamp (number)
+}
+```
+
+Use to fetch data for the zoomed range.
+
+### onRestore
+
+Fired when restore button clicked:
+
+```javascript
+onRestore() {
+  // Reset to full data range
+}
+```
+
+## Configuration Details
+
+### Grid
+
+```javascript
+grid: {
+  left: '3%',
+  right: '4%',
+  top: isMobile ? '8%' : '10%',
+  bottom: isMobile ? 90 : 20,
+  containLabel: true  // Labels inside grid
+}
+```
+
+### X-Axis (Time)
+
+```javascript
+xAxis: {
+  type: 'time',  // Time axis type
+  splitNumber: isMobile ? 6 : 12,  // Label count
+  axisLabel: {
+    rotate: isMobile ? 35 : 20,  // Label angle
+    hideOverlap: true  // Prevent label collision
+  }
+}
+```
+
+### Y-Axis
+
+```javascript
+yAxis: {
+  type: yType || 'value',  // 'value' or 'log'
+  scale: true  // Start from data min
+}
+```
+
+### DataZoom
+
+Two zoom components:
+
+1. **Inside** (gesture-based):
+   - Throttle: 80ms
+   - No mouse wheel zoom
+   - Move on mouse move
+   - Min span: 2 minutes
+
+2. **Slider** (visual control):
+   - Height: 28px
+   - Shows data shadow
+   - Custom label format
+   - Handle size: 16px
+
+## Performance
+
+### Memoization
+
+The component uses `memo` and `useMemo` to optimize:
+
+- Component re-renders
+- X-series array processing
+- Y-series transformation
+- Options object creation
+- Callback functions
+
+Only re-processes when props change.
+
+### Sampling
+
+```javascript
+sampling: 'none'  // No downsampling
+```
+
+For large datasets, consider changing to `'average'` or `'lttb'`.
+
+## Use Cases
+
+- **Sensor monitoring**: Temperature, pressure, flow over time
+- **System metrics**: CPU, memory, network usage
+- **Business analytics**: Sales, revenue, user growth
+- **IoT dashboards**: Device telemetry and status
+- **Environmental data**: Weather, water quality
+- **Performance tracking**: Response times, error rates
+
+## Container Requirements
+
+```jsx
+<div style={{ width: '100%', height: '500px' }}>
+  <LineChart xSeries={xData} ySeries={yData} />
+</div>
+```
+
+**Recommendations**:
+- Minimum width: 400px (600px+ recommended)
+- Minimum height: 300px (400px+ recommended)
+- Height must account for legend, toolbox, and zoom slider
+- Use `100%` width for responsive layouts
+
+## Accessibility
+
+- Keyboard-navigable toolbox
+- Data table view for screen readers
+- Clear visual distinction between series (colors)
+- Hover tooltips for data points
+- Legend for series identification
+
+See: [LineChart.jsx](/home/daytona/workspace/source/src/modules/Charts/components/LineChart.jsx)

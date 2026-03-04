@@ -1,0 +1,269 @@
+---
+title: Managing Charts
+description: Create, edit, and configure various chart types to visualize your data
+icon: "chart-line"
+---
+
+Mas Agua provides a comprehensive charting system with multiple visualization types. This guide covers creating, configuring, and managing charts.
+
+## Chart Types Available
+
+The platform supports 11 different chart types:
+
+1. **Porcentaje con Olas** - Liquid fill percentage visualization
+2. **Porcentaje Circular** - Circular percentage display
+3. **Grafico de torta** - Pie chart with rounded edges
+4. **Porcentaje rectangular** - Rectangular percentage visualization
+5. **Grafico de linea con superposicion** - Overlapping line chart
+6. **Porcentajes con estado** - Percentage with pump status
+7. **Speed Gauge** - Speed gauge visualization
+8. **Boolean Chart** - LED indicator for on/off states
+9. **Múltiple Boolean Chart** - Multiple LED indicators
+10. **Board Chart** - Dashboard combining multiple visualizations
+11. **Pump Control** - Dedicated pump control interface
+
+## Accessing Charts Management
+
+<Steps>
+  <Step title="Navigate to Charts Table">
+    Go to `/config/allGraphic` to view all existing charts and access management features.
+  </Step>
+
+  <Step title="Use Filter Options">
+    The charts table provides filters for:
+    - **Tipo**: Filter by chart type
+    - **Estado**: Filter by active/inactive status
+    
+    Click **"Filtrar"** to apply filters or **"Limpiar"** to reset.
+  </Step>
+</Steps>
+
+## Creating a New Chart
+
+<Steps>
+  <Step title="Click Create Chart Button">
+    From `/config/allGraphic`, click the **"Crear grafico"** button in the top-right corner.
+  </Step>
+
+  <Step title="Select Chart Type">
+    You'll be taken to `/config/graphic` where you can choose from the available chart types. Each type displays:
+    - Preview image
+    - Title and description
+    - Click the card to select that type
+  </Step>
+
+  <Step title="Configure Chart Settings">
+    Depending on the selected type, you'll be redirected to the appropriate configuration page:
+    
+    - **Boolean charts**: `/config/graphic/boolean`
+    - **Multiple Boolean**: `/config/graphic/multipleBoolean`
+    - **Pie charts**: `/config/graphic/pie`
+    - **Board charts**: `/config/graphic/board`
+    - **Pump control**: `/config/pumps`
+    - **Other types**: `/config/graphic/{id}`
+  </Step>
+</Steps>
+
+## Chart Configuration Elements
+
+Most charts share common configuration elements:
+
+### Basic Information
+
+- **Title**: Display name for the chart
+- **Order**: Numeric value controlling display position in dashboards
+- **Status**: Active/Inactive toggle
+
+### Data Source Selection
+
+Charts use the `SelectVars` component to choose data sources:
+
+<Steps>
+  <Step title="Open Variable Selector">
+    Click the variable selection dropdown in your chart configuration.
+  </Step>
+
+  <Step title="Choose InfluxDB Variable">
+    Select from available InfluxDB variables that will provide data to the chart.
+  </Step>
+
+  <Step title="Configure Display Options">
+    Depending on chart type, configure:
+    - Labels and units
+    - Colors and thresholds
+    - Time ranges and aggregation
+  </Step>
+</Steps>
+
+## Editing Existing Charts
+
+<Steps>
+  <Step title="Locate Your Chart">
+    Navigate to `/config/allGraphic` and find the chart in the table.
+  </Step>
+
+  <Step title="Click Edit Button">
+    Click **"Editar"** in the Actions column. The system routes to the appropriate editor based on chart type:
+    
+    ```javascript
+    // Routing logic from src/modules/Charts/views/ChartsTable.jsx:86-109
+    if (type === 'BooleanChart') {
+      navigate(`/config/graphic/boolean/${id}`)
+    }
+    if (type === 'MultipleBooleanChart') {
+      navigate(`/config/graphic/multipleBoolean/${id}`)
+    }
+    if (type === 'BoardChart') {
+      navigate(`/config/graphic/board/${id}`)
+    }
+    // ... other types
+    ```
+  </Step>
+
+  <Step title="Modify Configuration">
+    Update any settings as needed. Most editors provide live previews of your changes.
+  </Step>
+
+  <Step title="Save Changes">
+    Click the save button to persist your modifications.
+  </Step>
+</Steps>
+
+## Activating and Deactivating Charts
+
+<Steps>
+  <Step title="Find Chart in Table">
+    Navigate to `/config/allGraphic` and locate your chart.
+  </Step>
+
+  <Step title="Toggle Status">
+    Click the **"Activar"** or **"Desactivar"** button in the Actions column.
+  </Step>
+
+  <Step title="Confirm Action">
+    A confirmation dialog appears: "Esta seguro que desea activar/desactivar este grafico?"
+    
+    Click the appropriate button to confirm.
+  </Step>
+</Steps>
+
+<Note>
+  Inactive charts (status = 0) are hidden from dashboards but remain in the database and can be reactivated at any time.
+</Note>
+
+## Boolean Chart Configuration
+
+Boolean charts display LED-style indicators for on/off states:
+
+<Steps>
+  <Step title="Access Boolean Chart Editor">
+    Navigate to `/config/graphic/boolean` for new charts or `/config/graphic/boolean/{id}` for editing.
+  </Step>
+
+  <Step title="Configure LED Display">
+    Set custom colors and labels for:
+    - **On state**: Color and text when variable = true
+    - **Off state**: Color and text when variable = false
+  </Step>
+
+  <Step title="Select Data Variable">
+    Choose the boolean InfluxDB variable that controls the indicator state.
+  </Step>
+</Steps>
+
+## Multiple Boolean Chart
+
+Create multiple LED indicators in a single chart:
+
+<Steps>
+  <Step title="Access Multiple Boolean Editor">
+    Navigate to `/config/graphic/multipleBoolean` or `/config/graphic/multipleBoolean/{id}`.
+  </Step>
+
+  <Step title="Add Multiple Indicators">
+    Configure each LED indicator with:
+    - Variable selection
+    - Custom on/off colors
+    - Label text for each state
+  </Step>
+</Steps>
+
+## Pie Chart Configuration
+
+<Steps>
+  <Step title="Access Pie Chart Editor">
+    Navigate to `/config/graphic/pie` or `/config/graphic/pie/{id}`.
+  </Step>
+
+  <Step title="Configure Data Sets">
+    Add multiple data sets to create pie slices. Each set includes:
+    - Data variable
+    - Slice color
+    - Label
+  </Step>
+</Steps>
+
+## Chart Display Order
+
+The **Order** field controls where charts appear in dashboards:
+
+- Lower numbers appear first
+- Same order numbers are sorted by creation date
+- Leave empty to append to the end
+
+<Tip>
+  Use increments of 10 (10, 20, 30...) for order values. This makes it easy to insert new charts between existing ones later.
+</Tip>
+
+## Viewing Charts
+
+Once created and activated, charts appear in:
+
+- **Main Dashboard**: `/chart` or `/home` - displays active charts based on configured tabs
+- **Custom Tabs**: `/tabs` - charts organized in user-defined tab groups
+- **Board Dashboards**: `/boards` - charts embedded in board layouts
+
+## Best Practices
+
+<Warning>
+  Always test charts with live data before deploying to production dashboards. Verify that selected variables are actively receiving data.
+</Warning>
+
+### Naming Conventions
+
+- Use descriptive titles that indicate what's being measured
+- Include units in labels when appropriate (e.g., "Temperature (°C)")
+- Group related charts with similar naming patterns
+
+### Organization
+
+- Use the Order field strategically to group related charts
+- Deactivate unused charts rather than deleting them
+- Create chart type-specific naming prefixes for easier filtering
+
+### Performance
+
+- Limit the number of simultaneously active charts (recommend < 50)
+- Configure appropriate data refresh intervals
+- Use aggregation for historical data charts
+
+## Troubleshooting
+
+**Chart shows no data**
+- Verify the InfluxDB variable exists and is receiving data
+- Check variable permissions and access rights
+- Ensure the chart is active (status = 1)
+
+**Chart doesn't appear in dashboard**
+- Confirm chart status is Active
+- Check that the chart is assigned to the correct tab
+- Verify tab configuration includes the chart type
+
+**Edit button is disabled**
+- PumpControl charts can only be edited via `/config/pumps`
+- Check user permissions for chart editing
+
+**Changes not appearing**
+- Clear browser cache and refresh
+- Verify changes were saved successfully
+- Check for JavaScript console errors

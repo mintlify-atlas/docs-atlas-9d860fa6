@@ -1,0 +1,487 @@
+---
+title: Drawing Diagrams
+description: Create interactive diagrams using the Konva canvas-based drawing tools
+icon: "diagram-project"
+---
+
+Mas Agua includes a powerful diagram editor built on Konva canvas that allows you to create interactive diagrams with images, lines, text, and live data from InfluxDB variables.
+
+## Overview
+
+The diagram editor provides:
+- Drawing tools: lines, polylines, text, and images
+- Image library with pre-loaded equipment icons
+- Live variable integration with tooltips
+- Layer management (bring to front/send to back)
+- Zoom and pan capabilities
+- Save/load functionality
+
+## Accessing the Diagram Editor
+
+<Steps>
+  <Step title="Navigate to Diagrams List">
+    Go to `/config/diagram` to view all existing diagrams.
+  </Step>
+
+  <Step title="Create New Diagram">
+    Click the create button to navigate to `/newDiagram` for a blank canvas.
+  </Step>
+
+  <Step title="Edit Existing Diagram">
+    From the list, click edit on any diagram to open it at `/newDiagram/{id}`.
+  </Step>
+</Steps>
+
+## Understanding the Interface
+
+The diagram editor (src/modules/DrawDiagram/views/DrawDiagram.jsx) consists of:
+
+### Top Navbar
+
+Controls for diagram-level actions:
+- **Clear**: Remove all elements from canvas
+- **Save**: Save diagram to database
+- **Undo**: Remove last added element
+- **Send to Back**: Move selected element behind others
+- **Bring to Front**: Move selected element to top layer
+- **Zoom In/Out**: Adjust canvas zoom level
+- **Pan Mode**: Toggle panning mode
+
+### Left Sidebar
+
+Drawing tools and options:
+- **Image**: Add images from library
+- **Line**: Draw straight lines
+- **Polyline**: Draw multi-segment lines
+- **Text**: Add text labels
+- **Floating Variable**: Add variable display
+- **Delete**: Remove selected element
+
+### Main Canvas
+
+The interactive drawing area where you create your diagram.
+
+### Right Panels
+
+Context-sensitive panels that appear based on selection:
+- **Image Selector**: Choose from image library
+- **Line Style Panel**: Configure line appearance
+- **Text Styler**: Format text properties
+- **Tooltip Position Panel**: Configure variable display
+
+## Drawing Lines
+
+<Steps>
+  <Step title="Select Line Tool">
+    Click the line tool button in the left sidebar. The line style panel opens automatically.
+  </Step>
+
+  <Step title="Configure Line Style">
+    In the Line Style Panel:
+    - **Color**: Choose line color using color picker
+    - **Stroke Width**: Set line thickness (pixels)
+    - **Dash Pattern**: Select solid or dashed style
+  </Step>
+
+  <Step title="Draw the Line">
+    - Click on the canvas at the starting point
+    - Move mouse to endpoint (you'll see a preview)
+    - Click again to complete the line
+  </Step>
+
+  <Step title="Edit Line Style">
+    Select the line to modify its color, width, or dash pattern in the panel.
+  </Step>
+</Steps>
+
+<Tip>
+  Press **Escape** to cancel line drawing mode at any time.
+</Tip>
+
+## Drawing Polylines
+
+Polylines allow multi-segment paths:
+
+<Steps>
+  <Step title="Select Polyline Tool">
+    Click the polyline tool in the sidebar.
+  </Step>
+
+  <Step title="Configure Style">
+    Set color, width, and dash pattern in the Line Style Panel.
+  </Step>
+
+  <Step title="Draw Multiple Segments">
+    - Click to place first point
+    - Click additional points to create segments
+    - Each click adds a new vertex
+    - Press **Enter** to finish, or **Right-click** to complete
+  </Step>
+</Steps>
+
+<Note>
+  Polylines require at least 2 vertices (4 points in the points array) to be saved. Press Escape to cancel if you haven't placed enough points.
+</Note>
+
+## Adding Images
+
+<Steps>
+  <Step title="Open Image Selector">
+    Click the image tool in the sidebar. The image selector panel opens with available images.
+  </Step>
+
+  <Step title="Browse Image Library">
+    The library (src/modules/DrawDiagram/utils/js/ListImg.js) contains equipment icons organized by category:
+    - Pumps and motors
+    - Valves and controls
+    - Tanks and vessels
+    - Sensors and instruments
+  </Step>
+
+  <Step title="Select Image">
+    Click on an image to add it to the canvas. It appears at position (150, 150) by default.
+  </Step>
+
+  <Step title="Position the Image">
+    Drag the image to its desired location on the canvas.
+  </Step>
+
+  <Step title="Resize if Needed">
+    Select the image to show transformation handles. Drag corners to resize while maintaining aspect ratio.
+  </Step>
+</Steps>
+
+## Adding Text Labels
+
+<Steps>
+  <Step title="Select Text Tool">
+    Click the text tool in the sidebar.
+  </Step>
+
+  <Step title="Click Placement Position">
+    Click where you want the text to appear. A text input field opens.
+  </Step>
+
+  <Step title="Enter Text Content">
+    Type your text in the input field.
+  </Step>
+
+  <Step title="Format Text (Optional)">
+    Click the text styler button to configure:
+    - **Font Size**: Size in pixels
+    - **Fill Color**: Text color
+    - **Font Style**: Normal, bold, or italic
+  </Step>
+
+  <Step title="Save the Text">
+    Click the save button or press Enter to place the text on canvas.
+  </Step>
+</Steps>
+
+<Tip>
+  You can edit existing text by selecting it and clicking the text tool again. The text editor reopens with current content.
+</Tip>
+
+## Associating Variables with Elements
+
+### Adding Variable to Image
+
+<Steps>
+  <Step title="Select Image Element">
+    Click on an image on the canvas.
+  </Step>
+
+  <Step title="Open Variable Selector">
+    Click the variable assignment button in the sidebar.
+  </Step>
+
+  <Step title="Choose Variable">
+    Select an InfluxDB variable from the list. The variable will display near the image.
+  </Step>
+
+  <Step title="Configure Tooltip Position">
+    The Tooltip Position Panel opens. Configure:
+    - **Position**: Centro, Arriba, Abajo, Izquierda, Derecha
+    - **Show/Hide**: Toggle variable visibility
+    - **Max Value**: Set scale maximum (for gauges)
+    - **Boolean Colors**: Configure colors for true/false states
+    - **Binary Bit**: Specify bit position for binary variables
+  </Step>
+</Steps>
+
+### Adding Floating Variable
+
+<Steps>
+  <Step title="Select Floating Variable Tool">
+    Click the floating variable tool in sidebar.
+  </Step>
+
+  <Step title="Choose Variable">
+    Select a variable from the list.
+  </Step>
+
+  <Step title="Position Variable Display">
+    The variable appears with a default image. Drag it to the desired location.
+  </Step>
+</Steps>
+
+## Element Manipulation
+
+### Selecting Elements
+
+- Click any element to select it
+- Selected elements show transformation handles
+- Selection enables context-specific panels
+
+### Moving Elements
+
+<Steps>
+  <Step title="Select Element">
+    Click the element you want to move.
+  </Step>
+
+  <Step title="Drag to New Position">
+    Click and drag the element to its new location.
+  </Step>
+</Steps>
+
+### Deleting Elements
+
+<Steps>
+  <Step title="Select Element">
+    Click the element you want to delete.
+  </Step>
+
+  <Step title="Press Delete Key">
+    Press the **Delete** key on your keyboard, or click the delete tool in the sidebar.
+  </Step>
+</Steps>
+
+### Layer Management
+
+<Steps>
+  <Step title="Select Element">
+    Click the element you want to reorder.
+  </Step>
+
+  <Step title="Change Layer">
+    Click:
+    - **Send to Back**: Move element behind all others
+    - **Bring to Front**: Move element above all others
+  </Step>
+</Steps>
+
+## Zoom and Pan
+
+### Zooming
+
+<Steps>
+  <Step title="Use Zoom Controls">
+    Click the **Zoom In** or **Zoom Out** buttons in the top navbar.
+  </Step>
+</Steps>
+
+Zoom is controlled by a scale factor:
+- Zoom In: Multiplies scale by 1.05
+- Zoom Out: Divides scale by 1.05
+
+### Panning
+
+<Steps>
+  <Step title="Enable Pan Mode">
+    Click the pan toggle button in the top navbar to activate panning.
+  </Step>
+
+  <Step title="Pan the Canvas">
+    Click and drag anywhere on the canvas to move the view.
+  </Step>
+
+  <Step title="Disable Pan Mode">
+    Click the pan toggle again to return to normal editing mode.
+  </Step>
+</Steps>
+
+## Saving Diagrams
+
+<Steps>
+  <Step title="Click Save Button">
+    Click the **Save** button in the top navbar.
+  </Step>
+
+  <Step title="Enter Diagram Name">
+    A dialog prompts for the diagram name. Enter a descriptive name.
+  </Step>
+
+  <Step title="Confirm Save">
+    Click **Guardar** to save the diagram to the database.
+  </Step>
+</Steps>
+
+### What Gets Saved
+
+The save operation (src/modules/DrawDiagram/views/DrawDiagram.jsx:192-250) stores:
+
+```javascript
+{
+  elements: [],        // All canvas elements (images, lines, text)
+  circles: [],         // Circle shapes (if any)
+  diagramMetadata: {   // Diagram properties
+    title: "Diagram Name",
+    backgroundColor: "#ffffff",
+    backgroundImg: ""
+  },
+  deleted: {          // Tracking for edit mode
+    lines: [],
+    texts: [],
+    images: [],
+    polylines: []
+  }
+}
+```
+
+<Note>
+  When editing existing diagrams, only new elements have their IDs cleared before saving. Existing elements retain their IDs to enable proper updates.
+</Note>
+
+## Viewing Diagrams
+
+<Steps>
+  <Step title="Navigate to View Mode">
+    From the diagrams list at `/config/diagram`, click the view button to open `/viewDiagram/{id}`.
+  </Step>
+
+  <Step title="Interact with Live Data">
+    In view mode:
+    - Variables display real-time values from InfluxDB
+    - Hover over elements to see tooltips
+    - Elements are not editable
+  </Step>
+</Steps>
+
+## Keyboard Shortcuts
+
+Efficient diagram creation with keyboard shortcuts:
+
+| Shortcut | Action |
+|----------|--------|
+| **Escape** | Cancel current tool / Close panels |
+| **Delete** | Delete selected element |
+| **Enter** | Finish polyline / Save text |
+| **Right-click** | Finish polyline |
+
+## Best Practices
+
+### Diagram Organization
+
+<Warning>
+  Save frequently to avoid losing work. The undo function only removes the last element added.
+</Warning>
+
+- Use layers strategically (backgrounds behind, important elements in front)
+- Group related elements visually
+- Use consistent colors for similar element types
+- Label important components with text
+
+### Variable Integration
+
+- Position variable tooltips to avoid overlapping elements
+- Use meaningful positions (e.g., above for overhead displays)
+- Configure boolean colors to match standard conventions (green=on, red=off)
+- Set appropriate max values for gauge-style displays
+
+### Performance
+
+- Limit the number of elements in complex diagrams (< 100 recommended)
+- Use simple images when possible (smaller file sizes)
+- Avoid excessive polyline vertices
+
+### Naming
+
+- Use descriptive diagram names that indicate the system or area
+- Include version numbers if maintaining multiple iterations
+- Document what the diagram represents in the name
+
+## Troubleshooting
+
+**Element not appearing**
+- Check that element is not hidden behind others (use Bring to Front)
+- Verify element is within visible canvas area
+- Check zoom level - element may be very small or large
+
+**Cannot delete element**
+- Ensure element is selected (shows transformation handles)
+- Try selecting by clicking the element directly
+- Press Delete key rather than using menu
+
+**Polyline won't finish**
+- Ensure you have at least 2 vertices placed
+- Press Enter or right-click to complete
+- Press Escape to cancel if needed
+
+**Variable not displaying data**
+- Verify variable exists in InfluxDB
+- Check that variable is receiving data
+- Ensure variable visibility is enabled in Tooltip Position Panel
+
+**Diagram won't save**
+- Ensure you've entered a diagram name
+- Check browser console for errors
+- Verify backend API connectivity
+
+**Lost work after browser crash**
+- Diagrams are only saved when you click Save
+- No auto-save functionality exists
+- Save frequently during creation
+
+## Advanced Features
+
+### Background Configuration
+
+Diagrams support:
+- **Background Color**: Set via `diagramMetadata.backgroundColor`
+- **Background Image**: Set via `diagramMetadata.backgroundImg`
+
+### Element Data Structure
+
+Each element type has specific properties:
+
+**Line:**
+```javascript
+{
+  id: "unique-id",
+  type: "line",
+  points: [x1, y1, x2, y2],
+  stroke: "#3b82f6",
+  strokeWidth: 5,
+  dash: []
+}
+```
+
+**Image:**
+```javascript
+{
+  id: "unique-id",
+  type: "image",
+  src: "/path/to/image.png",
+  x: 150,
+  y: 150,
+  width: 100,
+  height: 100,
+  draggable: true,
+  dataInflux: { /* variable data */ }
+}
+```
+
+**Text:**
+```javascript
+{
+  id: "unique-id",
+  type: "text",
+  text: "Label",
+  x: 100,
+  y: 100,
+  fontSize: 16,
+  fill: "#000000",
+  fontStyle: "normal"
+}
+```

@@ -1,0 +1,478 @@
+---
+title: Real-time Monitoring
+description: Live data updates from InfluxDB with automatic refresh and efficient batch querying
+---
+
+## Overview
+
+Mas Agua provides real-time monitoring capabilities through integration with InfluxDB, automatically fetching and updating data at configurable intervals. The system is optimized to handle multiple data sources efficiently using batch queries.
+
+## Data Refresh Architecture
+
+### Automatic Updates
+
+The platform implements a dual-refresh strategy:
+
+1. **Dashboard View**: 30-second refresh interval
+2. **Map View**: 15-second refresh interval for geo-located markers
+3. **Detailed Charts**: 15-second refresh when expanded
+
+<img src="/images/realtime-data-flow.png" alt="Data flow diagram showing InfluxDB to frontend" />
+
+## Batch Query System
+
+Instead of making individual API calls for each variable, Mas Agua uses a single batch request to fetch all data simultaneously.
+
+### Variable Extraction
+
+```javascript
+function extractInfluxVars(chartsData) {
+  const vars = []
+
+  chartsData.forEach((chart) => {
+    // Handle pump control widgets
+    if (chart.component === 'PumpControl') {
+      const normalizePumpVar = (item) => ({
+        dataInflux: {
+          id: item.varId,
+          name: item.name,
+          unit: item.unit ?? null,
+          type: 'last',
+          calc: item.calc || false,
+          varsInflux: item.value,
+          equation: item.equation || null,
+          status: true
+        }
+      })
+
+      chart.data.initialPumps.forEach((pump) => {
+        vars.push(normalizePumpVar(pump))
+      })
+
+      chart.data.initialStates.forEach((state) => {
+        vars.push(normalizePumpVar(state))
+      })
+
+      return
+    }
+    
+    // Handle multiple boolean charts
+    if (chart.component === 'MultipleBooleanChart') {
+      chart.data.items.forEach((item) => {
+        if (item.influxVar) {
+          vars.push({ dataInflux: item.influxVar })
+        }
+      })
+      return
+    }
+
+    // Handle standard charts
+    Object.values(chart.data).forEach((value) => {
+      if (value && value.varsInflux) {
+        vars.push({ dataInflux: value })
+      }
+    })
+  })
+
+  return vars
+}
+```
+
+### Batch API Request
+
+```javascript
+async function fetchMultipleData(allVars) {
+  try {
+    const { data } = await request(
+      `${backend['Mas Agua']}/multipleDataInflux`,
+      'POST',
+      allVars
+    )
+    setInflValues(data)
+  } catch (error) {
+    console.error('Error multipleDataInflux:', error)
+  }
+}
+```
+
+**Endpoint**: `POST /multipleDataInflux`
+
+**Request Body**:
+```json
+[
+  {
+    "dataInflux": {
+      "id": 15,
+      "name": "nivel_tanque_01",
+      "unit": "%",
+      "type": "last",
+      "varsInflux": {
+        "tank_level": {
+          "calc_field": "nivel",
+          "measure": "tanques"
+        }
+      }
+    }
+  },
+  {
+    "dataInflux": {
+      "id": 16,
+      "name": "presion_red",
+      "unit": "PSI",
+      "type": "last",
+      "varsInflux": {
+        "pressure": {
+          "calc_field": "presion",
+          "measure": "sensores"
+        }
+      }
+    }
+  }
+]
+```
+
+**Response**:
+```json
+{
+  "15": 78.5,
+  "16": 45.2
+}
+```
+
+## Refresh Intervals
+
+### Dashboard Refresh
+
+```javascript
+useEffect(() => {
+  getCharts()
+  
+  return () => clearInterval(intervalRef.current)
+}, [])
+
+async function getCharts() {
+  // Fetch chart configurations
+  const { data } = await request(
+    `${backend['Mas Agua']}/indicatorCharts`,
+    'GET'
+  )
+  
+  setCharts(formatConfig)
+  
+  // Extract all variables
+  const allVars = extractInfluxVars(formatConfig)
+  
+  // Initial data fetch
+  fetchMultipleData(allVars)
+  
+  // Configure 30-second interval
+  if (intervalRef.current) clearInterval(intervalRef.current)
+  intervalRef.current = setInterval(
+    () => fetchMultipleData(allVars),
+    30000 // 30 seconds
+  )
+}
+```
+
+### Map View Refresh
+
+```javascript
+useEffect(() => {
+  if (!withInfo) return
+
+  fetchMultipleInfluxValues()
+
+  const interval = setInterval(
+    fetchMultipleInfluxValues,
+    15000 // 15 seconds
+  )
+  
+  return () => clearInterval(interval)
+}, [])
+```
+
+### Chart Accordion Refresh
+
+```javascript
+useEffect(() => {
+  if (expanded) {
+    fetchChartData()
+
+    const intervalId = setInterval(
+      fetchChartData,
+      15000 // 15 seconds when expanded
+    )
+
+    return () => {
+      clearInterval(intervalId)
+    }
+  } else {
+    setChartData(undefined)
+    setLoader(true)
+  }
+}, [expanded, fetchChartData])
+```
+
+## InfluxDB Variable Configuration
+
+Variables are configured with detailed InfluxDB query parameters:
+
+```javascript
+{
+  id: 15,                    // Unique identifier
+  name: 'nivel_tanque_01',   // Display name
+  unit: '%',                 // Unit of measurement
+  type: 'last',              // Query type (last, mean, max, min)
+  calc: false,               // Calculated field flag
+  varsInflux: {
+    tank_level: {              // Field key
+      calc_field: 'nivel',     // Calculated field name
+      measure: 'tanques'       // Measurement name
+    }
+  },
+  equation: null,            // Optional calculation equation
+  status: true               // Active status
+}
+```
+
+### Query Types
+
+- **last**: Most recent value
+- **mean**: Average over time range
+- **max**: Maximum value in range
+- **min**: Minimum value in range
+- **sum**: Sum of values
+
+### Calculated Fields
+
+Support for computed values from raw data:
+
+```javascript
+{
+  calc: true,
+  equation: '(pressure_in - pressure_out) * 0.145',
+  varsInflux: {
+    pressure_in: { calc_field: 'entrada', measure: 'presion' },
+    pressure_out: { calc_field: 'salida', measure: 'presion' }
+  }
+}
+```
+
+## Map Marker Updates
+
+Geographic markers update their displayed values in real-time:
+
+```javascript
+const fetchMultipleInfluxValues = async () => {
+  if (!markers || markers.length === 0) return
+
+  const vars = extractInfluxVarsFromMarkers(markers)
+
+  try {
+    const { data } = await request(
+      `${backend[import.meta.env.VITE_APP_NAME]}/multipleDataInflux`,
+      'POST',
+      vars
+    )
+
+    // Update markers with new values
+    const updated = markers.map((marker) => {
+      const id = marker.popupInfo.data.id
+      const value = data[id] ?? 'Sin datos'
+
+      return {
+        ...marker,
+        popupInfo: {
+          ...marker.popupInfo,
+          value: `${value} ${marker.popupInfo.data.unit ?? ''}`
+        }
+      }
+    })
+
+    setMarkers(updated)
+
+  } catch (error) {
+    console.error("Error múltiples influx en mapa:", error)
+  }
+}
+```
+
+### Status Field Interpretation
+
+```javascript
+const formatMarkerValue = (marker) => {
+  const rawValue = marker.popupInfo.value
+  
+  if (rawValue == null) return "No hay datos"
+
+  const influxConfig = Object.values(
+    marker.popupInfo.data.varsInflux
+  )[0]
+  const calcField = influxConfig.calc_field
+
+  // Interpret binary status fields
+  if (
+    calcField === "status" || 
+    calcField === "estados_0" || 
+    calcField.includes("estado")
+  ) {
+    const numeric = Number(rawValue)
+    return numeric === 1 ? "Encendido" : "Apagado"
+  }
+
+  return rawValue
+}
+```
+
+## Data Validation
+
+### Handling Missing Data
+
+```javascript
+const isValidNumber = (v) =>
+  v !== null &&
+  v !== undefined &&
+  v !== '' &&
+  !isNaN(Number(v))
+
+// Usage in charts
+const hasValue = isValidNumber(value)
+const safeValue = hasValue ? Number(value) : 0
+
+if (!hasValue) {
+  return 'Sin datos'
+}
+```
+
+### Chart Component Data Wrapper
+
+The `ChartComponentDbWrapper` resolves InfluxDB values for charts:
+
+```jsx
+<ChartComponentDbWrapper
+  chartId={chart.id}
+  ChartComponent={ChartComponentDb}
+  initialProps={chart.props}
+  initialData={chart.data}
+  inflValues={inflValues}  // Real-time data object
+/>
+```
+
+## Performance Optimizations
+
+### Single API Call
+
+<Check>
+  **Before**: 15 charts × 2 variables = 30 API calls
+</Check>
+
+<Check>
+  **After**: 1 batch API call with 30 variables
+</Check>
+
+### Efficient State Updates
+
+Using a single state object for all values:
+
+```javascript
+const [inflValues, setInflValues] = useState({})
+
+// Update all values at once
+setInflValues({
+  "15": 78.5,
+  "16": 45.2,
+  "17": 1,      // Boolean ON
+  "18": 0       // Boolean OFF
+})
+```
+
+### Cleanup on Unmount
+
+```javascript
+useEffect(() => {
+  getCharts()
+  
+  return () => clearInterval(intervalRef.current)
+}, [])
+```
+
+## Configuration Options
+
+Customize refresh intervals through environment variables:
+
+```bash
+# .env
+VITE_DASHBOARD_REFRESH_INTERVAL=30000  # 30 seconds
+VITE_MAP_REFRESH_INTERVAL=15000        # 15 seconds
+VITE_CHART_REFRESH_INTERVAL=15000      # 15 seconds
+```
+
+## Error Handling
+
+```javascript
+async function fetchMultipleData(allVars) {
+  try {
+    const { data } = await request(
+      `${backend['Mas Agua']}/multipleDataInflux`,
+      'POST',
+      allVars
+    )
+    setInflValues(data)
+  } catch (error) {
+    console.error('Error multipleDataInflux:', error)
+    // Charts will display "Sin datos" when value is unavailable
+  }
+}
+```
+
+<Warning>
+  Network errors do not stop the refresh interval. The system will continue attempting to fetch data every interval until successful.
+</Warning>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Optimal Variable Count">
+    Keep dashboard variables under 50 for best performance. Consider splitting into multiple dashboards if you need more.
+  </Accordion>
+
+  <Accordion title="Refresh Interval Selection">
+    - **Critical monitoring**: 10-15 seconds
+    - **Standard monitoring**: 30 seconds
+    - **Historical data**: 1-5 minutes
+  </Accordion>
+
+  <Accordion title="InfluxDB Query Optimization">
+    Use appropriate query types:
+    - `last()` for current status
+    - `mean()` for averaged trends
+    - Consider downsampling for long time ranges
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+### Data Not Updating
+
+1. Check browser console for API errors
+2. Verify InfluxDB connection in backend
+3. Confirm variable IDs match database configuration
+4. Check refresh interval is running (not paused)
+
+### Performance Issues
+
+1. Reduce number of active charts
+2. Increase refresh interval
+3. Optimize InfluxDB queries
+4. Check network latency to InfluxDB server
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Charts & Visualization" icon="chart-mixed" href="/features/charts-visualization">
+    Explore all available chart types and their data requirements
+  </Card>
+  <Card title="Dashboard" icon="gauge" href="/features/dashboard">
+    Learn how to configure the dashboard view
+  </Card>
+</CardGroup>

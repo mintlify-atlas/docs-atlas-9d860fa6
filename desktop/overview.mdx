@@ -1,0 +1,175 @@
+---
+title: Desktop Overview
+description: Native desktop application built with Tauri v2 for Windows, macOS, and Linux
+---
+
+Mas Agua provides a native desktop application built with [Tauri v2](https://v2.tauri.app/), offering superior performance and native OS integration compared to web-based solutions.
+
+## Architecture
+
+The desktop application combines:
+
+- **Frontend**: React + Vite application with Material-UI components
+- **Backend**: Rust-based Tauri runtime for native functionality
+- **Communication**: Tauri IPC bridge between frontend and backend
+
+### Technology Stack
+
+<CardGroup cols={2}>
+  <Card title="Frontend" icon="react">
+    - React 18 with Vite
+    - Material-UI (MUI Joy)
+    - React Router for navigation
+    - MapLibre GL for mapping
+  </Card>
+  <Card title="Backend" icon="rust">
+    - Tauri v2.4.0
+    - Rust 2021 edition
+    - Native OS APIs
+    - Secure IPC layer
+  </Card>
+</CardGroup>
+
+## Package Information
+
+- **Product Name**: Mas Agua
+- **Package Name**: masagua-desktop
+- **Bundle Identifier**: com.masagua.desktop
+- **Current Version**: 1.0.5
+
+## Tauri Plugins
+
+The desktop app uses the following Tauri plugins:
+
+### Store Plugin (v2.4.1)
+
+Persistent key-value storage for application settings and state.
+
+```rust
+.plugin(tauri_plugin_store::Builder::default().build())
+```
+
+**Frontend Usage**:
+```javascript
+import { Store } from '@tauri-apps/plugin-store'
+
+const store = new Store('settings.json')
+await store.set('key', 'value')
+const value = await store.get('key')
+```
+
+### Updater Plugin (v2.4.1)
+
+Automatic application updates from GitHub releases.
+
+```rust
+.plugin(tauri_plugin_updater::Builder::new().build())
+```
+
+See [Auto-Updates](/desktop/updates) for implementation details.
+
+### Process Plugin (v2.0)
+
+Process management and application lifecycle control.
+
+```rust
+.plugin(tauri_plugin_process::init())
+```
+
+**Frontend Usage**:
+```javascript
+import { relaunch, exit } from '@tauri-apps/plugin-process'
+
+// Restart application (used after updates)
+await relaunch()
+
+// Exit application
+await exit(0)
+```
+
+## Window Configuration
+
+Default window settings from `tauri.conf.json`:
+
+```json
+{
+  "title": "Mas Agua",
+  "width": 1024,
+  "height": 768,
+  "resizable": true,
+  "maximized": true
+}
+```
+
+## Security Capabilities
+
+The application uses Tauri's capability system for granular permission control:
+
+```json
+{
+  "identifier": "store-access",
+  "windows": ["main"],
+  "platforms": ["linux", "macOS", "windows"],
+  "permissions": [
+    "store:default",
+    "process:default",
+    "updater:default",
+    "core:app:allow-version"
+  ]
+}
+```
+
+## Platform Support
+
+<CardGroup cols={3}>
+  <Card title="Windows" icon="windows">
+    MSI installer format
+  </Card>
+  <Card title="macOS" icon="apple">
+    DMG disk image
+  </Card>
+  <Card title="Linux" icon="linux">
+    DEB, RPM, and AppImage formats
+  </Card>
+</CardGroup>
+
+## Development Workflow
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run tauri dev
+
+# Build for production
+npm run tauri build
+```
+
+See [Installation](/desktop/installation) and [Building](/desktop/building) for detailed instructions.
+
+## Key Features
+
+- **Native Performance**: Compiled Rust backend with minimal overhead
+- **Small Bundle Size**: ~15MB compared to Electron's 100MB+
+- **Auto-Updates**: Seamless updates from GitHub releases
+- **Offline Support**: Full functionality without internet connection
+- **System Tray**: Background operation with tray icon
+- **Native Notifications**: OS-level notification integration
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/desktop/installation">
+    Set up the development environment
+  </Card>
+  <Card title="Building" icon="hammer" href="/desktop/building">
+    Build and package the desktop app
+  </Card>
+  <Card title="Auto-Updates" icon="arrow-rotate-right" href="/desktop/updates">
+    Configure automatic update system
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/overview">
+    Explore available APIs
+  </Card>
+</CardGroup>

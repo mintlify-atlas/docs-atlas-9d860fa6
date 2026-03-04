@@ -1,0 +1,338 @@
+---
+title: Alarms Configuration
+description: Configure threshold-based alarms with notification triggers
+---
+
+## Overview
+
+Alarms monitor variable values and trigger notifications when threshold conditions are met. Mas Agua supports:
+
+- **Simple Alarms**: Single condition on one variable
+- **Combined Alarms**: Multiple conditions with logical operators (AND/OR)
+- **Time-Restricted Alarms**: Active only during specified hours
+- **Repeat Intervals**: Control notification frequency
+
+## Accessing Alarms
+
+Navigate to **Configuration > Alarmas** to manage alarm configurations.
+
+## Creating an Alarm
+
+<Steps>
+  <Step title="Open Alarm Modal">
+    Click **Crear alarma** to open the configuration form.
+  </Step>
+  
+  <Step title="Configure Basic Settings">
+    <ParamField path="name" type="string" required>
+      Alarm name (e.g., "High Pressure Alert")
+    </ParamField>
+    
+    <ParamField path="type" type="toggle">
+      Alarm type:
+      - `single` - Simple alarm (default)
+      - `combined` - Combined alarm (toggle **Alarma combinada** switch)
+    </ParamField>
+  </Step>
+  
+  <Step title="Define Primary Condition">
+    <ParamField path="id_influxvars" type="select" required>
+      Select the variable to monitor
+    </ParamField>
+    
+    <ParamField path="condition" type="select" required>
+      Comparison operator:
+      - `>` - Mayor que (Greater than)
+      - `<` - Menor que (Less than)
+      - `=` - Igual a (Equal to)
+      - `>=` - Mayor o igual (Greater than or equal)
+      - `<=` - Menor o igual (Less than or equal)
+      - `entre` - Entre (Between two values)
+    </ParamField>
+    
+    <ParamField path="value" type="number" required>
+      Threshold value
+    </ParamField>
+    
+    <ParamField path="value2" type="number">
+      Second threshold value (only when `condition` = `entre`)
+    </ParamField>
+  </Step>
+  
+  <Step title="Configure Notification Settings">
+    <ParamField path="repeatInterval" type="number" required>
+      Repeat interval in minutes (e.g., 15, 30, 60)
+    </ParamField>
+  </Step>
+  
+  <Step title="Optional: Time Range Restriction">
+    Toggle **"Restringir alarma a un rango horario"** to limit alarm to specific hours:
+    
+    <ParamField path="startime" type="time">
+      Start time (HH:MM format)
+    </ParamField>
+    
+    <ParamField path="endtime" type="time">
+      End time (HH:MM format)
+    </ParamField>
+  </Step>
+</Steps>
+
+## Simple Alarm Example
+
+Alert when tank level exceeds 5 meters:
+
+```json
+{
+  "name": "Tank Overflow Warning",
+  "type": "single",
+  "id_influxvars": 42,
+  "condition": ">",
+  "value": 5,
+  "repeatInterval": 15
+}
+```
+
+This alarm:
+- Triggers when variable #42 > 5
+- Repeats notification every 15 minutes while condition is true
+- Active 24/7
+
+## Combined Alarms
+
+Combined alarms evaluate two conditions with a logical operator.
+
+### Enabling Combined Mode
+
+1. Toggle **"Alarma combinada"** switch
+2. Additional fields appear for secondary condition
+
+### Configuration Fields
+
+<ParamField path="logicOperator" type="select" required>
+  Logical operator between conditions:
+  - `AND` - Both conditions must be true
+  - `OR` - Either condition can be true
+</ParamField>
+
+<ParamField path="secondaryVariableId" type="select" required>
+  Second variable to monitor
+</ParamField>
+
+<ParamField path="secondaryCondition" type="select" required>
+  Comparison operator for second variable:
+  - `>`, `<`, `=`, `>=`, `<=`
+</ParamField>
+
+<ParamField path="secondaryValue" type="number" required>
+  Threshold for second variable
+</ParamField>
+
+### Combined Alarm Example
+
+Alert when pressure is high AND flow is low:
+
+```json
+{
+  "name": "Pump Malfunction Alert",
+  "type": "combined",
+  "id_influxvars": 10,
+  "condition": ">",
+  "value": 8,
+  "logicOperator": "AND",
+  "secondaryVariableId": 15,
+  "secondaryCondition": "<",
+  "secondaryValue": 100,
+  "repeatInterval": 30
+}
+```
+
+Triggers when:
+- Variable #10 (pressure) > 8 bar **AND**
+- Variable #15 (flow) < 100 m³/h
+
+## Time-Restricted Alarms
+
+Limit alarms to specific operating hours.
+
+### Example: Business Hours Only
+
+```json
+{
+  "name": "Low Production Alert",
+  "id_influxvars": 25,
+  "condition": "<",
+  "value": 500,
+  "repeatInterval": 60,
+  "hasTimeRange": true,
+  "startime": "08:00",
+  "endtime": "18:00"
+}
+```
+
+This alarm:
+- Only active between 8:00 AM and 6:00 PM
+- Ignored outside this time range
+- Repeats every 60 minutes during active hours
+
+## Managing Alarms
+
+### View Alarm Details
+
+The alarm table displays:
+
+| Column | Description |
+|--------|-------------|
+| Nombre | Alarm name |
+| Condición | Condition expression (shows both conditions for combined alarms) |
+| Tipo | Simple or Combinada |
+| Repetir / Horario | Repeat interval and time range (if set) |
+| Estado | Activo (active) or Inactivo (inactive) |
+| Acciones | Edit and Activate/Deactivate buttons |
+
+### Activate/Deactivate Alarm
+
+1. Click **Activar** or **Desactivar** button
+2. Confirm the action
+
+The alarm `status` field changes:
+- `true` = Active (monitoring enabled)
+- `false` = Inactive (monitoring disabled)
+
+<Note>
+  Inactive alarms are retained in the system but do not trigger notifications.
+</Note>
+
+### Edit Alarm
+
+1. Click **Editar** button
+2. Modify configuration in the modal
+3. Click **Guardar cambios**
+
+## Condition Expressions
+
+### Simple Condition Display
+
+```
+Tank Level > 5
+```
+
+### Between Condition Display
+
+```
+Temperature entre 20 y 30
+```
+
+### Combined Condition Display
+
+```
+Pressure > 8
+AND
+Flow Rate < 100
+```
+
+## API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|----------|
+| `/getAlarms` | GET | Retrieve all alarms |
+| `/createAlarm` | POST | Create new alarm |
+| `/updateAlarm/:id` | PUT | Update existing alarm |
+| `/changeStatusAlarm` | PUT | Activate/deactivate alarm |
+
+## Data Structure
+
+Complete alarm schema:
+
+```typescript
+interface Alarm {
+  id?: number;
+  name: string;
+  type: 'single' | 'combined';
+  
+  // Primary condition
+  id_influxvars: number;
+  condition: '>' | '<' | '=' | '>=' | '<=' | 'entre';
+  value: number;
+  value2?: number;  // For 'entre' condition
+  
+  // Combined alarm fields
+  logicOperator?: 'AND' | 'OR';
+  secondaryVariableId?: number;
+  secondaryCondition?: '>' | '<' | '=' | '>=' | '<=';
+  secondaryValue?: number;
+  
+  // Notification settings
+  repeatInterval: number;  // Minutes
+  
+  // Time restriction
+  hasTimeRange?: boolean;
+  startime?: string;  // HH:MM
+  endtime?: string;   // HH:MM
+  
+  // Status
+  status: boolean;
+}
+```
+
+## Field Relationships
+
+### Simple Alarm
+
+Required fields:
+- `name`, `id_influxvars`, `condition`, `value`, `repeatInterval`
+
+Optional fields:
+- `value2` (only if `condition` = `'entre'`)
+- `hasTimeRange`, `startime`, `endtime` (for time restriction)
+
+### Combined Alarm
+
+Required fields (in addition to simple alarm fields):
+- `logicOperator`, `secondaryVariableId`, `secondaryCondition`, `secondaryValue`
+
+## Validation Notes
+
+<Info>
+  Based on `src/modules/ConfigAlarms/components/ModalAlarm.jsx:110`:
+  
+  - If `condition !== 'entre'`, the `value2` field is removed from payload
+  - If `type === 'single'`, all secondary condition fields are removed
+  - If `!hasTimeRange`, time fields are removed from payload
+</Info>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Set Appropriate Repeat Intervals">
+    - Critical alarms: 5-15 minutes
+    - Warning alarms: 30-60 minutes
+    - Informational: 120+ minutes
+    
+    Prevents notification spam while ensuring timely alerts.
+  </Accordion>
+  
+  <Accordion title="Use Combined Alarms for Complex Conditions">
+    Example: High temperature AND low flow might indicate equipment failure.
+    
+    Single conditions might trigger false positives.
+  </Accordion>
+  
+  <Accordion title="Time-Restrict Non-Critical Alarms">
+    Prevent after-hours alerts for non-urgent conditions:
+    - Production monitoring (business hours only)
+    - Efficiency alerts (daytime operations)
+  </Accordion>
+  
+  <Accordion title="Test Before Activating">
+    1. Create alarm in inactive state
+    2. Verify variables exist and have data
+    3. Test threshold values
+    4. Activate when confirmed
+  </Accordion>
+</AccordionGroup>
+
+## See Also
+
+- [Variables](/configuration/variables) - Configure variables to monitor
+- [Notifications](/configuration/notifications) - Set up notification channels

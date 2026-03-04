@@ -1,0 +1,158 @@
+---
+title: API Overview
+description: Introduction to the Mas Agua REST API
+---
+
+## Introduction
+
+The Mas Agua API is a RESTful API that provides programmatic access to water management data, including real-time monitoring, charts, diagrams, and system configuration. All API endpoints are accessed via HTTP and return JSON responses.
+
+## Base URL
+
+The API base URL varies by environment:
+
+<CodeGroup>
+```bash Local
+http://localhost:4000/api
+```
+
+```bash Development
+http://172.26.5.17:32001/api
+```
+
+```bash Production
+https://masagua.cooptech.com.ar/api
+```
+</CodeGroup>
+
+## Request Structure
+
+All API requests are made using standard HTTP methods:
+
+- **GET** - Retrieve data
+- **POST** - Create or submit data
+- **PUT** - Update existing data
+- **DELETE** - Remove data
+
+### Content Type
+
+All requests must include the following headers:
+
+```bash
+Content-Type: application/json
+Accept: application/json
+```
+
+## Response Format
+
+API responses are returned in JSON format with the following structure:
+
+### Success Response
+
+```json
+{
+  "data": {
+    // Response data object or array
+  }
+}
+```
+
+### Error Response
+
+When an error occurs, the API returns an HTTP error status code along with an error message:
+
+```json
+{
+  "error": {
+    "message": "Error description",
+    "code": "ERROR_CODE"
+  }
+}
+```
+
+## Error Handling
+
+The Mas Agua API uses standard HTTP status codes:
+
+| Status Code | Description |
+|------------|-------------|
+| 200 | Success - Request completed successfully |
+| 400 | Bad Request - Invalid parameters |
+| 401 | Unauthorized - Invalid or missing authentication token |
+| 403 | Forbidden - Insufficient permissions |
+| 404 | Not Found - Resource does not exist |
+| 500 | Internal Server Error - Server-side error occurred |
+
+### Error Handling in Code
+
+The API utility handles 500 errors specially by extracting detailed error messages:
+
+<CodeGroup>
+```javascript Error Handling
+try {
+  const response = await axios({
+    method: 'POST',
+    url: `${baseUrl}/api/endpoint`,
+    data: requestData,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  return response;
+} catch (error) {
+  if (error.response?.status === 500) {
+    let messageError = '';
+    const errors = error.response.data;
+    for (const key in errors) {
+      if (Object.hasOwnProperty.call(errors, key)) {
+        messageError += ' ' + errors[key].message;
+      }
+    }
+    throw messageError;
+  } else {
+    throw error;
+  }
+}
+```
+</CodeGroup>
+
+Refer to the source implementation at `src/utils/js/request.js:26-38`.
+
+## Rate Limiting
+
+<Info>
+Currently, the Mas Agua API does not enforce rate limiting. However, clients should implement reasonable request throttling to avoid overwhelming the server.
+</Info>
+
+## CORS and Credentials
+
+All authenticated requests are made with credentials:
+
+```javascript
+withCredentials: true
+```
+
+This allows the API to accept cookies and authentication tokens from cross-origin requests.
+
+## API Clients
+
+Mas Agua provides JavaScript utilities for making API requests:
+
+- **`request(url, method, data)`** - Authenticated requests with JWT token
+- **`requestPublic(url, method, data)`** - Public endpoints without authentication
+- **`requestFile(url, method, data)`** - File upload requests with special credentials
+
+See [Authentication](/api/authentication) for details on using these utilities.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock" href="/api/authentication">
+    Learn how to authenticate API requests using JWT tokens
+  </Card>
+  <Card title="Endpoints" icon="code" href="/api/endpoints">
+    Explore available API endpoints and their usage
+  </Card>
+</CardGroup>

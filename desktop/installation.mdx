@@ -1,0 +1,328 @@
+---
+title: Installation
+description: Set up the Mas Agua desktop development environment
+---
+
+## Prerequisites
+
+Before setting up the desktop application, ensure you have the required tools installed.
+
+### System Dependencies
+
+<Tabs>
+  <Tab title="Windows">
+    **Required**:
+    - [Microsoft Visual Studio C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+    - [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) (usually pre-installed on Windows 10/11)
+    - [Rust](https://rustup.rs/) (via rustup)
+
+    ```powershell
+    # Install Rust
+    winget install Rustlang.Rustup
+    ```
+  </Tab>
+  <Tab title="macOS">
+    **Required**:
+    - Xcode Command Line Tools
+    - [Rust](https://rustup.rs/) (via rustup)
+
+    ```bash
+    # Install Xcode Command Line Tools
+    xcode-select --install
+
+    # Install Rust
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    ```
+  </Tab>
+  <Tab title="Linux">
+    **Required**:
+    - System dependencies for WebKitGTK
+    - [Rust](https://rustup.rs/) (via rustup)
+
+    **Ubuntu/Debian**:
+    ```bash
+    sudo apt update
+    sudo apt install libwebkit2gtk-4.1-dev \
+      build-essential \
+      curl \
+      wget \
+      file \
+      libxdo-dev \
+      libssl-dev \
+      libayatana-appindicator3-dev \
+      librsvg2-dev
+
+    # Install Rust
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    ```
+
+    **Fedora/RHEL**:
+    ```bash
+    sudo dnf install webkit2gtk4.1-devel \
+      openssl-devel \
+      curl \
+      wget \
+      file \
+      libappindicator-gtk3-devel \
+      librsvg2-devel
+
+    # Install Rust
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    ```
+
+    **Arch Linux**:
+    ```bash
+    sudo pacman -Syu
+    sudo pacman -S webkit2gtk-4.1 \
+      base-devel \
+      curl \
+      wget \
+      file \
+      openssl \
+      appmenu-gtk-module \
+      gtk3 \
+      libappindicator-gtk3 \
+      librsvg
+
+    # Install Rust
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    ```
+  </Tab>
+</Tabs>
+
+### Node.js and Package Manager
+
+Install Node.js 18+ and npm:
+
+```bash
+# Using nvm (recommended)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+nvm install 18
+nvm use 18
+
+# Or download from nodejs.org
+# https://nodejs.org/
+```
+
+### Tauri CLI
+
+The Tauri CLI is included as a dev dependency and will be installed with npm packages.
+
+## Clone and Setup
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/CspmIT/mas-agua-front.git
+cd mas-agua-front
+```
+
+### 2. Install Dependencies
+
+```bash
+# Install Node.js dependencies
+npm install
+```
+
+This installs:
+- Frontend dependencies (React, Material-UI, etc.)
+- Tauri CLI (`@tauri-apps/cli`: v2.9.6)
+- Tauri API bindings (`@tauri-apps/api`: v2.9.1)
+- Tauri plugins:
+  - `@tauri-apps/plugin-store`: v2.4.2
+  - `@tauri-apps/plugin-updater`: v2.9.0
+  - `@tauri-apps/plugin-process`: v2.3.1
+
+### 3. Verify Rust Installation
+
+```bash
+# Check Rust version
+rustc --version
+
+# Update Rust if needed
+rustup update
+```
+
+### 4. Build Rust Dependencies
+
+The first build downloads and compiles Rust crates:
+
+```bash
+# This may take 5-10 minutes on first run
+cd src-tauri
+cargo build
+cd ..
+```
+
+<Note>
+  The first cargo build downloads ~500MB of dependencies and takes several minutes. Subsequent builds are much faster due to caching.
+</Note>
+
+## Environment Configuration
+
+### Environment Variables
+
+Create a `.env` file in the project root:
+
+```bash
+# API Configuration
+VITE_API_URL=https://your-api-server.com
+VITE_WS_URL=wss://your-websocket-server.com
+
+# Map Configuration
+VITE_MAPBOX_TOKEN=your_mapbox_token_here
+```
+
+<Warning>
+  Never commit the `.env` file to version control. It's included in `.gitignore` by default.
+</Warning>
+
+### Tauri Configuration
+
+The main Tauri configuration is in `src-tauri/tauri.conf.json`. Key settings:
+
+```json
+{
+  "productName": "Mas Agua",
+  "version": "1.0.5",
+  "identifier": "com.masagua.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  }
+}
+```
+
+## Development Server
+
+### Start Development Mode
+
+```bash
+# Run Tauri in development mode
+npm run tauri dev
+```
+
+This command:
+1. Starts Vite dev server on `http://localhost:1420`
+2. Launches Tauri window with hot-reload enabled
+3. Enables Rust debug logging
+4. Watches for file changes
+
+### Development Features
+
+- **Hot Module Replacement (HMR)**: Frontend changes reload instantly
+- **Rust Hot Reload**: Requires manual restart with `Ctrl+R` in the app
+- **DevTools**: Right-click > Inspect Element to open browser DevTools
+- **Console Logging**: Check terminal for Rust backend logs
+
+### Common Development Commands
+
+```bash
+# Frontend only (for web development)
+npm run dev
+
+# Build frontend
+npm run build
+
+# Preview production build
+npm run preview
+
+# Run Tauri CLI directly
+npm run tauri -- --help
+```
+
+## Troubleshooting
+
+### Rust Compilation Errors
+
+**Error**: `linker 'cc' not found`
+```bash
+# Linux: Install build essentials
+sudo apt install build-essential
+
+# macOS: Install Xcode Command Line Tools
+xcode-select --install
+```
+
+### WebView2 Issues (Windows)
+
+**Error**: `WebView2 not found`
+
+ Download and install [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
+
+### Permission Denied (Linux)
+
+**Error**: `Permission denied` when running binary
+
+```bash
+chmod +x src-tauri/target/debug/masagua-desktop
+```
+
+### Port Already in Use
+
+**Error**: `Port 1420 is already in use`
+
+```bash
+# Find and kill the process using port 1420
+lsof -ti:1420 | xargs kill -9  # macOS/Linux
+netstat -ano | findstr :1420   # Windows
+```
+
+### Clear Build Cache
+
+If you encounter strange build errors:
+
+```bash
+# Clean Rust build artifacts
+cd src-tauri
+cargo clean
+cd ..
+
+# Clean Node.js dependencies
+rm -rf node_modules package-lock.json
+npm install
+
+# Clean Vite cache
+rm -rf dist .vite
+```
+
+## IDE Setup
+
+### Visual Studio Code
+
+Recommended extensions:
+
+```json
+{
+  "recommendations": [
+    "rust-lang.rust-analyzer",
+    "tauri-apps.tauri-vscode",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint"
+  ]
+}
+```
+
+### rust-analyzer Configuration
+
+Add to `.vscode/settings.json`:
+
+```json
+{
+  "rust-analyzer.linkedProjects": ["src-tauri/Cargo.toml"],
+  "rust-analyzer.cargo.features": "all"
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Building" icon="hammer" href="/desktop/building">
+    Build and package the desktop app
+  </Card>
+  <Card title="Auto-Updates" icon="arrow-rotate-right" href="/desktop/updates">
+    Configure automatic updates
+  </Card>
+</CardGroup>

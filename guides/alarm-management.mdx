@@ -1,0 +1,418 @@
+---
+title: Alarm Management
+description: Create and manage alarms to monitor critical conditions
+icon: "bell"
+---
+
+Mas Agua's alarm system allows you to configure automated notifications when variables exceed thresholds or meet specific conditions. This guide covers creating, editing, and managing alarms.
+
+## Overview
+
+The alarm management system provides:
+- **Simple alarms**: Single variable condition monitoring
+- **Combined alarms**: Multiple variable conditions with logic operators
+- **Time-based restrictions**: Limit alarms to specific hours
+- **Repeat intervals**: Control notification frequency
+- **Active/Inactive status**: Enable or disable alarms without deleting
+
+## Accessing Alarm Management
+
+<Steps>
+  <Step title="Navigate to Alarms">
+    Go to `/config/alarm` to view all configured alarms.
+  </Step>
+
+  <Step title="Review Alarm Table">
+    The table displays:
+    - **Nombre**: Alarm name
+    - **Condición**: Variable condition(s)
+    - **Tipo**: Simple or Combined (Combinada)
+    - **Repetir / Horario**: Repeat interval and time restrictions
+    - **Estado**: Active or Inactive status
+    - **Acciones**: Edit and Activate/Deactivate buttons
+  </Step>
+</Steps>
+
+## Creating a Simple Alarm
+
+Simple alarms monitor a single variable against a threshold.
+
+<Steps>
+  <Step title="Open Alarm Creation Modal">
+    From `/config/alarm`, click the **"Crear alarma"** button.
+  </Step>
+
+  <Step title="Enter Alarm Name">
+    Provide a descriptive name in the **"Nombre"** field.
+    
+    <Tip>
+      Use names that clearly indicate what's being monitored and the condition, e.g., "High Tank Level" or "Low Pressure Warning".
+    </Tip>
+  </Step>
+
+  <Step title="Select Variable">
+    Choose the InfluxDB variable to monitor from the **"Variable"** dropdown.
+  </Step>
+
+  <Step title="Configure Condition">
+    Select the comparison operator from **"Condición"**:
+    - **Mayor que** (greater than): Triggers when variable exceeds value
+    - **Menor que** (less than): Triggers when variable falls below value
+    - **Igual a** (equals): Triggers when variable equals value
+    - **Mayor o igual** (greater than or equal): Triggers when variable is at or above value
+    - **Menor o igual** (less than or equal): Triggers when variable is at or below value
+    - **Entre**: Triggers when variable is within a range
+  </Step>
+
+  <Step title="Set Threshold Value">
+    Enter the threshold value in the **"Valor"** field.
+    
+    If you selected **"Entre"**, also enter the upper bound in **"Valor 2"**.
+  </Step>
+
+  <Step title="Configure Repeat Interval">
+    Enter the notification repeat interval in **"Intervalo de repetición (minutos)"**.
+    
+    - **0**: Alarm triggers only once when condition is met
+    - **> 0**: Alarm repeats every X minutes while condition persists
+  </Step>
+
+  <Step title="Save the Alarm">
+    Click **"Crear alarma"** to save. You'll see a success message and the alarm appears in the table.
+  </Step>
+</Steps>
+
+## Creating a Combined Alarm
+
+Combined alarms monitor two variables with a logic operator (AND/OR).
+
+<Steps>
+  <Step title="Open Alarm Creation Modal">
+    Click **"Crear alarma"** from `/config/alarm`.
+  </Step>
+
+  <Step title="Enable Combined Mode">
+    Toggle the **"Alarma combinada"** switch to ON.
+  </Step>
+
+  <Step title="Configure Primary Condition">
+    Set up the first condition:
+    - Enter alarm name
+    - Select first variable
+    - Choose condition operator
+    - Set threshold value
+  </Step>
+
+  <Step title="Select Logic Operator">
+    Choose how the conditions relate:
+    - **AND (y)**: Both conditions must be true
+    - **OR (o)**: Either condition can be true
+  </Step>
+
+  <Step title="Configure Secondary Condition">
+    Set up the second condition:
+    - **Variable secundaria**: Select second variable
+    - **Condición secundaria**: Choose comparison operator
+    - **Valor secundario**: Enter threshold value
+  </Step>
+
+  <Step title="Set Repeat Interval">
+    Configure notification frequency as with simple alarms.
+  </Step>
+
+  <Step title="Save the Alarm">
+    Click **"Crear alarma"** to save the combined alarm.
+  </Step>
+</Steps>
+
+### Combined Alarm Examples
+
+**AND Example**: High temperature AND low flow
+```
+Temperature > 80 AND Flow < 10
+```
+Alarm triggers only when both conditions are true.
+
+**OR Example**: High level OR pump failure
+```
+Tank Level > 95 OR Pump Status = 0
+```
+Alarm triggers if either condition is true.
+
+## Adding Time Restrictions
+
+Limit alarms to specific time ranges to avoid nuisance alarms during expected conditions.
+
+<Steps>
+  <Step title="Enable Time Range">
+    In the alarm creation/edit modal, toggle **"Restringir alarma a un rango horario"** to ON.
+  </Step>
+
+  <Step title="Set Start Time">
+    Enter the start time in **"Hora de inicio"** (24-hour format).
+  </Step>
+
+  <Step title="Set End Time">
+    Enter the end time in **"Hora de fin"** (24-hour format).
+  </Step>
+</Steps>
+
+<Note>
+  The alarm will ONLY trigger during the specified time range. Outside these hours, the alarm is inactive even if conditions are met.
+</Note>
+
+### Time Restriction Use Cases
+
+**Business Hours Only**
+- Start: 08:00, End: 17:00
+- Avoid after-hours notifications for non-critical alarms
+
+**Night Shift Monitoring**
+- Start: 22:00, End: 06:00
+- Monitor conditions specific to overnight operations
+
+**Peak Demand Periods**
+- Start: 06:00, End: 09:00
+- Alert on high usage during morning peak
+
+## Editing Alarms
+
+<Steps>
+  <Step title="Locate Alarm">
+    Find the alarm you want to edit in the table at `/config/alarm`.
+  </Step>
+
+  <Step title="Click Edit">
+    Click the **"Editar"** button in the Actions column.
+  </Step>
+
+  <Step title="Modify Settings">
+    The modal opens pre-filled with current settings. Update any fields as needed:
+    - Change thresholds
+    - Modify repeat intervals
+    - Update time restrictions
+    - Switch between simple and combined types
+  </Step>
+
+  <Step title="Save Changes">
+    Click **"Guardar cambios"** to update the alarm.
+  </Step>
+</Steps>
+
+<Warning>
+  Changing an alarm from combined to simple removes the secondary condition. Ensure this is intended before saving.
+</Warning>
+
+## Activating and Deactivating Alarms
+
+Control alarm status without deleting configuration:
+
+<Steps>
+  <Step title="Find Alarm in Table">
+    Locate the alarm you want to enable/disable.
+  </Step>
+
+  <Step title="Check Current Status">
+    The **Estado** column shows:
+    - **Activo** (green): Alarm is enabled
+    - **Inactivo** (red): Alarm is disabled
+  </Step>
+
+  <Step title="Click Status Button">
+    Click the **"Activar"** or **"Desactivar"** button in the Actions column.
+  </Step>
+
+  <Step title="Confirm Change">
+    A confirmation dialog appears. Click to confirm the status change.
+  </Step>
+</Steps>
+
+<Tip>
+  Use deactivation instead of deletion for temporary alarm suspension. This preserves configuration for future reactivation.
+</Tip>
+
+## Alarm Modal Components
+
+The alarm configuration modal (src/modules/ConfigAlarms/components/ModalAlarm.jsx) includes:
+
+### Basic Fields
+- **Nombre**: Alarm identifier (required)
+- **Variable**: Primary monitored variable (required)
+- **Condición**: Comparison operator (required)
+- **Valor**: Threshold value (required)
+- **Valor 2**: Second threshold for "entre" condition
+
+### Advanced Options
+- **Alarma combinada**: Switch to enable dual conditions
+- **Intervalo de repetición**: Notification frequency in minutes
+- **Restringir alarma**: Time-based activation toggle
+
+### Combined Alarm Fields
+- **Operador lógico**: AND or OR
+- **Variable secundaria**: Second monitored variable
+- **Condición secundaria**: Second comparison operator
+- **Valor secundario**: Second threshold value
+
+### Time Restriction Fields
+- **Hora de inicio**: Range start time
+- **Hora de fin**: Range end time
+
+## Understanding Alarm Conditions
+
+### Condition Types
+
+**Greater Than**
+```
+Alarm triggers when: variable_value > threshold
+Example: Temperature > 75
+```
+
+**Less Than**
+```
+Alarm triggers when: variable_value < threshold
+Example: Pressure < 20
+```
+
+**Equal To**
+```
+Alarm triggers when: variable_value = threshold
+Example: Status = 0 (off)
+```
+
+**Between (entre)**
+```
+Alarm triggers when: value1 <= variable_value <= value2
+Example: Level between 80 and 95
+```
+
+### Repeat Interval Behavior
+
+The repeat interval controls notification frequency:
+
+- **0 minutes**: Single notification when alarm triggers
+- **5 minutes**: Re-notify every 5 minutes while condition persists
+- **60 minutes**: Hourly notifications while alarm is active
+
+<Note>
+  The repeat timer starts when the alarm first triggers. If the condition clears and triggers again, the repeat interval resets.
+</Note>
+
+## Best Practices
+
+### Alarm Naming
+
+<Warning>
+  Use clear, actionable alarm names. Operators should understand the issue and required response immediately.
+</Warning>
+
+Good examples:
+- "High Tank 1 Level - Check Inlet Valve"
+- "Low Discharge Pressure - Verify Pump Operation"
+- "High Temperature Building 3 - Check HVAC"
+
+Poor examples:
+- "Alarm 1"
+- "Test"
+- "Variable 123 High"
+
+### Threshold Selection
+
+- Set thresholds with appropriate margins from critical values
+- Use warning alarms at conservative thresholds
+- Use critical alarms at operational limits
+- Avoid setting thresholds at normal operating points
+
+### Repeat Intervals
+
+- Critical alarms: 5-15 minutes for urgent attention
+- Warning alarms: 30-60 minutes to avoid notification fatigue
+- Informational alarms: 0 minutes (notify once)
+
+### Time Restrictions
+
+- Use for non-critical alarms during off-hours
+- Don't restrict safety-critical alarms
+- Align with shift schedules and staffing
+- Document why restrictions are in place
+
+### Combined Alarms
+
+- Use AND for confirming conditions (reduces false positives)
+- Use OR for redundant monitoring (catches any failure)
+- Keep logic simple - complex conditions are hard to troubleshoot
+- Test thoroughly before deploying to production
+
+## Troubleshooting
+
+**Alarm not triggering**
+- Verify alarm status is "Activo" (Active)
+- Check if current time is within time restriction (if configured)
+- Verify variable is receiving data
+- Test threshold values against current variable readings
+- Check repeat interval hasn't suppressed notification
+
+**Too many alarm notifications**
+- Increase repeat interval to reduce frequency
+- Adjust threshold to avoid marginal conditions
+- Add time restrictions to limit active hours
+- Consider if alarm is truly necessary
+
+**"Variable no disponible" error**
+- Selected variable doesn't exist in database
+- Variable may have been deleted
+- Check variable configuration at `/config/vars`
+
+**Combined alarm logic not working**
+- Verify both variables are receiving data
+- Test each condition independently
+- Confirm logic operator (AND vs OR) is correct
+- Check that thresholds are achievable
+
+**Time restriction not working**
+- Verify server time matches expected timezone
+- Check that start/end times are in 24-hour format
+- Ensure times don't cross midnight (use two alarms if needed)
+- Confirm "hasTimeRange" toggle is enabled
+
+**Cannot save alarm**
+- Check that all required fields are filled
+- Verify variable selections are valid
+- Ensure threshold values are numbers
+- Check browser console for validation errors
+
+## Alarm Data Structure
+
+The system stores alarms with this structure (src/modules/ConfigAlarms/components/ModalAlarm.jsx:24-39):
+
+```javascript
+{
+  name: "Alarm Name",
+  id_influxvars: 123,           // Primary variable ID
+  condition: ">",                // Comparison operator
+  value: 75,                     // Threshold value
+  value2: 100,                   // Second threshold (for 'entre')
+  repeatInterval: 15,            // Minutes between notifications
+  type: "simple",                // "simple" or "combined"
+  logicOperator: "AND",          // "AND" or "OR" (combined only)
+  secondaryVariableId: 456,      // Second variable (combined only)
+  secondaryCondition: "<",       // Second operator (combined only)
+  secondaryValue: 10,            // Second threshold (combined only)
+  hasTimeRange: true,            // Time restriction enabled
+  startime: "08:00",            // Range start
+  endtime: "17:00",             // Range end
+  status: true                   // Active/Inactive
+}
+```
+
+## Integration with Notifications
+
+Alarms integrate with the notification system:
+
+- Active alarms trigger notifications to configured channels
+- Notification settings are managed at `/config/notifications`
+- Alarm acknowledgment may be available depending on configuration
+- Historical alarm events can be viewed in the alerts log at `/alert`
+
+<Tip>
+  Configure notification channels before deploying critical alarms to ensure alerts reach the appropriate personnel.
+</Tip>

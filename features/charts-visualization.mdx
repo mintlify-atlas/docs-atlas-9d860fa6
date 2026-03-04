@@ -1,0 +1,688 @@
+---
+title: Charts & Visualization
+description: Complete guide to all chart types including liquid fill, gauge, boolean, line, pie, and bar charts
+---
+
+## Overview
+
+Mas Agua provides a comprehensive suite of chart components powered by ECharts and custom React visualizations. All charts are designed for real-time data display with smooth animations and responsive layouts.
+
+## Chart Library
+
+### Available Chart Types
+
+| Chart Type | Use Case | Real-time | Configurable |
+|------------|----------|-----------|-------------|
+| Liquid Fill | Tank levels, percentages | Yes | Shape, color, unit |
+| Gauge Speed | Pressure, flow rate | Yes | Max value, color |
+| Boolean Chart | On/off status, alarms | Yes | Colors, labels |
+| Multiple Boolean | Multi-state indicators | Yes | Grid layout |
+| Line Chart | Trends over time | Yes | Time range, zoom |
+| Pie/Doughnut | Distribution, categories | Yes | Colors, radius |
+| Bar Chart | Comparative data | Yes | Dataset format |
+| Area Chart | Historical trends | Yes | Color, opacity |
+
+## Liquid Fill Chart
+
+Animated liquid-fill gauge for displaying volume and percentage data.
+
+<img src="/images/liquid-fill-shapes.png" alt="Different liquid fill shapes" />
+
+### Configuration
+
+```jsx
+import LiquidFillPorcentaje from './components/LiquidFillPorcentaje'
+
+<LiquidFillPorcentaje
+  value={75.5}
+  maxValue={100}
+  color="#38bdf8"
+  shape="circle"
+  porcentage={true}
+  border={true}
+  unidad="m³"
+  other="Tanque Norte"
+/>
+```
+
+### Supported Shapes
+
+```javascript
+const SHAPE_CONFIG = {
+  circle: {
+    radius: '90%',
+    amplitude: 8,
+    waveLength: '90%',
+    fontSize: 24,
+    outlineDistance: 4,
+  },
+  rect: {
+    radius: '85%',
+    amplitude: 5,
+    waveLength: '90%',
+    fontSize: 24,
+  },
+  roundRect: {
+    radius: '90%',
+    amplitude: 8,
+    waveLength: '90%',
+    fontSize: 24,
+  },
+  triangle: {
+    radius: '80%',
+    amplitude: 8,
+    fontSize: 22,
+  },
+  diamond: {
+    radius: '90%',
+    amplitude: 8,
+    fontSize: 22,
+  },
+  arrow: {
+    radius: '70%',
+    amplitude: 8,
+    fontSize: 18,
+  },
+  pin: {
+    radius: '100%',
+    amplitude: 8,
+    fontSize: 24,
+  },
+}
+```
+
+### Multi-Variable Mode
+
+Display multiple related values in a single liquid fill:
+
+```jsx
+<LiquidFillPorcentaje
+  multipleValues={{
+    value: { value: 85.5 },
+    maxValue: 100,
+    secondary: {
+      value: 42.3,
+      unit: '°C',
+      varsInflux: { /* InfluxDB config */ }
+    }
+  }}
+  color="#38bdf8"
+  shape="circle"
+/>
+```
+
+**Output**:
+```
+85.5 %
+42.3 °C
+```
+
+### Color Gradient
+
+```javascript
+itemStyle: {
+  color: {
+    type: 'linear',
+    x: 0, y: 0, x2: 0, y2: 1,
+    colorStops: [
+      { offset: 0, color: '#a5f3fc' },    // Light cyan
+      { offset: 0.5, color: '#38bdf8' },  // Sky blue
+      { offset: 1, color: '#0c4a6e' },    // Dark blue
+    ],
+  },
+}
+```
+
+## Gauge Speed
+
+Speedometer-style gauge for measurements with defined ranges.
+
+<img src="/images/gauge-examples.png" alt="Gauge chart variations" />
+
+### Configuration
+
+```jsx
+import GaugeSpeed from './components/GaugeSpeed'
+
+<GaugeSpeed
+  value={45.2}
+  maxValue={100}
+  color="#5c5ac7"
+  unidad="PSI"
+  description="Presión actual"
+  description2="Red principal"
+/>
+```
+
+### Arc Configuration
+
+```javascript
+series: [{
+  type: 'gauge',
+  startAngle: 210,    // Bottom left
+  endAngle: -30,      // Bottom right
+  min: 0,
+  max: safeMax,
+  radius: '95%',
+}]
+```
+
+### Progress Indicator
+
+```javascript
+progress: {
+  show: true,
+  width: 22,
+  roundCap: true,
+  itemStyle: {
+    color: hasValue
+      ? {
+          type: 'linear',
+          colorStops: [
+            { offset: 0, color: '#c7d2fe' },
+            { offset: 0.5, color: '#5c5ac7' },
+            { offset: 1, color: '#312e81' },
+          ],
+        }
+      : '#cbd5e1', // Gray when no data
+  },
+}
+```
+
+### Detail Formatter
+
+```javascript
+detail: {
+  offsetCenter: [0, '85%'],
+  formatter: () =>
+    hasValue
+      ? `{value|${safeValue.toFixed(2)} ${unidad}}\n{sub|${description}}`
+      : `{value|Sin datos}\n{sub|${description}}`,
+  rich: {
+    value: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: '#111827',
+    },
+    sub: {
+      fontSize: 22,
+      color: '#4b5563',
+    },
+  },
+}
+```
+
+## Boolean Chart
+
+LED-style indicator for binary states.
+
+<img src="/images/boolean-led.png" alt="Boolean LED indicators" />
+
+### Configuration
+
+```jsx
+import BooleanChart from './components/BooleanChart'
+
+<BooleanChart
+  value={true}
+  textOn="Encendido"
+  textOff="Apagado"
+  colorOn="#00ff00"
+  colorOff="#444"
+/>
+```
+
+### LED Visual Effect
+
+```javascript
+// Main LED circle
+{
+  type: 'scatter',
+  symbol: 'circle',
+  symbolSize: 110,
+  itemStyle: {
+    color: value
+      ? {
+          type: 'radial',
+          x: 0.35, y: 0.35, r: 0.8,
+          colorStops: [
+            { offset: 0, color: '#d1fae5' },
+            { offset: 0.4, color: colorOn },
+            { offset: 1, color: '#065f46' },
+          ],
+        }
+      : {
+          type: 'radial',
+          x: 0.4, y: 0.4, r: 0.8,
+          colorStops: [
+            { offset: 0, color: '#9ca3af' },
+            { offset: 1, color: '#1f2937' },
+          ],
+        },
+    shadowBlur: value ? 35 : 10,
+    shadowColor: value ? colorOn : '#000',
+  },
+}
+```
+
+### Outer Ring
+
+```javascript
+// Decorative outer ring
+{
+  type: 'scatter',
+  symbol: 'circle',
+  symbolSize: 130,
+  itemStyle: {
+    color: 'transparent',
+    borderColor: '#1f2937',
+    borderWidth: 6,
+    shadowBlur: 15,
+    shadowColor: 'rgba(0,0,0,0.6)',
+  },
+}
+```
+
+## Multiple Boolean Chart
+
+Grid of multiple boolean indicators.
+
+### Configuration
+
+```jsx
+import MultipleBooleanChart from './components/MultipleBooleanChart'
+
+<MultipleBooleanChart
+  title="Estado del Sistema"
+  columns={2}
+  items={[
+    {
+      key: 'pump_1',
+      title: 'Bomba 1',
+      textOn: 'Activa',
+      textOff: 'Inactiva',
+      colorOn: '#10b981',
+      colorOff: '#6b7280',
+      value: true,
+      influxVar: { /* config */ }
+    },
+    {
+      key: 'alarm',
+      title: 'Alarma',
+      textOn: 'Alarma',
+      textOff: 'Normal',
+      colorOn: '#ef4444',
+      colorOff: '#10b981',
+      value: false,
+      influxVar: { /* config */ }
+    }
+  ]}
+/>
+```
+
+## Line Chart
+
+Time-series chart with zoom and pan capabilities.
+
+<img src="/images/line-chart-zoom.png" alt="Line chart with zoom controls" />
+
+### Configuration
+
+```jsx
+import LineChart from './components/LineChart'
+
+<LineChart
+  yType="value"
+  xSeries={[
+    1709568000000,  // Timestamps in milliseconds
+    1709571600000,
+    1709575200000,
+  ]}
+  ySeries={[
+    {
+      name: 'Presión Entrada',
+      data: [45.2, 46.1, 44.8],
+      color: '#3b82f6',
+      areaStyle: {},  // Enable area fill
+    },
+    {
+      name: 'Presión Salida',
+      data: [38.5, 39.2, 38.1],
+      color: '#10b981',
+    }
+  ]}
+  onZoomRange={({ startMs, endMs }) => {
+    console.log('Zoomed to:', startMs, endMs)
+  }}
+  onRestore={() => {
+    console.log('Zoom reset')
+  }}
+/>
+```
+
+### Timezone Configuration
+
+```javascript
+const TIMEZONE = 'America/Argentina/Buenos_Aires'
+
+const formatMsToDateTime = (ms) => {
+  return new Date(ms).toLocaleString('es-AR', {
+    timeZone: TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+}
+```
+
+### Tooltip Formatter
+
+```javascript
+tooltip: {
+  trigger: 'axis',
+  formatter: (params) => {
+    const timeMs = params[0]?.value?.[0]
+    const title = formatMsToDateTime(timeMs)
+    
+    let html = `<div style="font-weight:600;">${title}</div>`
+    
+    params.forEach((p) => {
+      const value = p?.value?.[1]
+      const valueText = isEmptyValue(value) ? 'Sin datos' : value
+      
+      html += `
+        <div style="display:flex;gap:6px;">
+          <span style="background:${p.color};"></span>
+          <span>${p.seriesName}:</span>
+          <b>${valueText}</b>
+        </div>
+      `
+    })
+    
+    return html
+  }
+}
+```
+
+### Data Zoom Controls
+
+```javascript
+dataZoom: [
+  {
+    type: 'inside',          // Mouse/touch zoom
+    xAxisIndex: 0,
+    throttle: 80,
+    zoomOnMouseWheel: false,
+    moveOnMouseMove: true,
+    minValueSpan: 2 * 60 * 1000,  // Min 2 minutes
+  },
+  {
+    type: 'slider',          // Slider control
+    xAxisIndex: 0,
+    height: 28,
+    filterMode: 'none',
+    minValueSpan: 2 * 60 * 1000,
+    handleSize: 16,
+  },
+]
+```
+
+### Toolbox Features
+
+```javascript
+toolbox: {
+  feature: {
+    dataZoom: {              // Box zoom tool
+      yAxisIndex: 'none'
+    },
+    dataView: {              // Data table view
+      readOnly: true,
+      title: 'Tabla',
+      optionToContent: buildDataViewTableHtml,
+    },
+    restore: {               // Reset zoom
+      title: 'Restablecer',
+    },
+    saveAsImage: {           // Download as image
+      name: 'Gráfico +Agua',
+      title: 'Guardar imagen',
+    },
+  },
+}
+```
+
+## Pie/Doughnut Chart
+
+Categorical data distribution.
+
+### Configuration
+
+```jsx
+import DoughnutChart from './components/DoughnutChart'
+
+<DoughnutChart
+  data={[
+    { value: 335, name: 'Consumo Residencial' },
+    { value: 234, name: 'Consumo Industrial' },
+    { value: 135, name: 'Consumo Comercial' },
+  ]}
+/>
+```
+
+### Pie vs Doughnut
+
+```javascript
+series: [{
+  type: 'pie',
+  radius: ['0%', '70%'],   // Doughnut: inner/outer radius
+  // radius: '70%',        // Pie: single radius value
+  data: data,
+}]
+```
+
+## Bar Chart
+
+Comparative bar visualization.
+
+### Dataset Format
+
+```jsx
+import BarDataSet from './components/BarDataSet'
+
+<BarDataSet
+  data={[
+    ['Mes', 'Consumo', 'Producción', 'Pérdidas'],
+    ['Enero', 43.3, 85.8, 12.4],
+    ['Febrero', 83.1, 73.4, 15.2],
+    ['Marzo', 86.4, 65.2, 10.8],
+  ]}
+/>
+```
+
+### Configuration
+
+```javascript
+options = {
+  dataset: {
+    source: data,  // First row is headers
+  },
+  xAxis: { type: 'category' },
+  yAxis: {},
+  series: [
+    { type: 'bar' },  // One series per column
+    { type: 'bar' },
+    { type: 'bar' },
+  ],
+}
+```
+
+## Area Chart (Home)
+
+Compact area chart for dashboard cards.
+
+```jsx
+import GrafAreaHome from './components/GrafAreaHome'
+
+<GrafAreaHome
+  data={[45, 52, 48, 55, 51, 58]}
+  numVal="55 m³"
+  title="Caudal Actual"
+  colorStatus="#3b82f6"
+/>
+```
+
+## EChart Wrapper
+
+All charts use a shared EChart wrapper component:
+
+```jsx
+import EChart from './EChart'
+
+const MyChart = ({ config }) => {
+  return <EChart config={options} />
+}
+```
+
+### Event Handling
+
+```jsx
+<EChart 
+  config={options}
+  onZoomRange={({ startMs, endMs }) => {
+    // Handle zoom event
+  }}
+  onRestore={() => {
+    // Handle restore event
+  }}
+/>
+```
+
+## Responsive Design
+
+### Mobile Detection
+
+```javascript
+const isMobile = useMemo(
+  () => window.matchMedia('(max-width: 768px)').matches,
+  []
+)
+```
+
+### Mobile Legend
+
+```javascript
+legend: isMobile
+  ? {
+      type: 'scroll',
+      bottom: 50,
+      itemWidth: 14,
+      itemHeight: 10,
+      textStyle: { fontSize: 11 },
+    }
+  : {
+      type: 'scroll',
+      orient: 'horizontal',
+      top: 0,
+      left: 'center',
+    }
+```
+
+## Performance Optimization
+
+### Memoization
+
+```javascript
+const memoizedYSeries = useMemo(() => {
+  return (ySeries || []).map((series) => ({
+    ...series,
+    type: 'line',
+    connectNulls: true,
+    symbolSize: 2,
+    sampling: 'none',
+  }))
+}, [ySeries])
+```
+
+### Callback Optimization
+
+```javascript
+const tooltipFormatter = useCallback((params) => {
+  return buildTooltipHtml(params)
+}, [])
+
+const axisLabelFormatter = useCallback((valueMs) => {
+  return formatMsAxisLabel(valueMs)
+}, [])
+```
+
+## Chart Dashboard Integration
+
+Using charts in the expandable dashboard view:
+
+```jsx
+import ChartAccordion from './components/ChartAccordion'
+
+<ChartAccordion
+  chart={{
+    id: 1,
+    name: 'Presión de Red',
+    type: 'LineChart',
+    config: { /* chart config */ }
+  }}
+/>
+```
+
+### Auto-refresh on Expand
+
+```javascript
+useEffect(() => {
+  if (expanded) {
+    fetchChartData()
+    const intervalId = setInterval(fetchChartData, 15000)
+    return () => clearInterval(intervalId)
+  }
+}, [expanded, fetchChartData])
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Chart Selection">
+    - **Liquid Fill**: Tank levels, capacity percentages
+    - **Gauge**: Pressure, flow, speed measurements
+    - **Boolean**: Pump status, valve states, alarms
+    - **Line**: Trends, historical data, comparisons
+    - **Pie**: Distribution of categories
+    - **Bar**: Comparative metrics across periods
+  </Accordion>
+
+  <Accordion title="Color Schemes">
+    Use consistent color coding:
+    - Blue tones: Water-related metrics
+    - Green: Active/on states, normal operation
+    - Red: Alarms, critical states
+    - Gray: Inactive/off states, no data
+  </Accordion>
+
+  <Accordion title="Data Validation">
+    Always validate data before rendering:
+    ```javascript
+    const isValidNumber = (v) =>
+      v !== null && v !== undefined && v !== '' && !isNaN(Number(v))
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Dashboard" icon="gauge-high" href="/features/dashboard">
+    Learn how to compose charts into a dashboard
+  </Card>
+  <Card title="Maps" icon="map" href="/features/maps">
+    Display chart data on geographic maps
+  </Card>
+</CardGroup>

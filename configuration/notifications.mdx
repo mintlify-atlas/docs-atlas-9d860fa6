@@ -1,0 +1,308 @@
+---
+title: Notifications Configuration
+description: Configure event notifications by device, brand, and version
+---
+
+## Overview
+
+The Notifications module configures event triggers and notification priorities for different device types. Notifications are organized hierarchically:
+
+- **Device Type**: Router, sensor, controller
+- **Brand**: Equipment manufacturer
+- **Version**: Firmware or model version
+- **Events**: Specific events that trigger notifications
+
+## Accessing Notifications
+
+Navigate to **Configuration > Notificaciones** to manage notification settings.
+
+## Interface Structure
+
+The notifications page displays expandable accordions organized by:
+
+```
+Device → Brand → Version
+  └─ Event Configuration Table
+```
+
+Example hierarchy:
+
+```
+Router → Cisco → v2.5
+  ├─ Connection Lost
+  ├─ High CPU Usage
+  └─ Memory Full
+```
+
+## Configuration Table
+
+Each device/brand/version combination shows a table with configurable events.
+
+### Table Columns
+
+From `src/modules/ConfigNotifications/utils/DataTable/ColumnsNot.jsx`:
+
+<ParamField path="event_name" type="string">
+  Name of the event (e.g., "Connection Timeout", "Sensor Offline")
+</ParamField>
+
+<ParamField path="priority" type="select">
+  Notification priority level (editable)
+</ParamField>
+
+<ParamField path="enabled" type="checkbox">
+  Enable/disable notifications for this event
+</ParamField>
+
+## Managing Notifications
+
+<Steps>
+  <Step title="Expand Device Category">
+    Click the accordion header showing the device → brand → version path.
+  </Step>
+  
+  <Step title="Review Event List">
+    The table loads with all configurable events for that device.
+  </Step>
+  
+  <Step title="Enable/Disable Events">
+    Check or uncheck the enabled column for each event.
+  </Step>
+  
+  <Step title="Set Priorities">
+    Use the priority dropdown to set notification urgency for each event.
+  </Step>
+  
+  <Step title="Save Changes">
+    Click the **Guardar** button at the bottom of the table.
+  </Step>
+</Steps>
+
+## Event Priority Handling
+
+The `handlePriority` function (from `src/modules/ConfigNotifications/components/Accordion.jsx:29`) updates event configuration:
+
+```javascript
+// When priority changes:
+{
+  id: eventId,
+  priority: selectedPriority,
+  enabled: currentEnabledState
+}
+```
+
+Changed events are tracked and sent to the backend on save.
+
+## Event Enable/Disable
+
+The `handleCheck` function tracks which events are enabled:
+
+```javascript
+// When checkbox changes:
+{
+  id: eventId,
+  enabled: true/false,
+  priority: currentPriority
+}
+```
+
+## Saving Configuration
+
+When clicking **Guardar**:
+
+1. Confirmation dialog appears
+2. Modified events are grouped (47 records per group)
+3. Sources are generated for MQTT configuration
+4. Changes are posted to `/ConfigNotify` endpoint
+
+<Warning>
+  Based on code at `src/modules/ConfigNotifications/components/Accordion.jsx:73`, the MQTT configuration send is currently commented out for safety. Only database updates occur.
+</Warning>
+
+## Data Structure
+
+Notification configuration structure:
+
+```typescript
+interface NotificationConfig {
+  router: {
+    device: string;    // Device type
+    brand: string;     // Manufacturer
+    version: string;   // Firmware/model version
+  };
+  objets: Array<{
+    id: number;
+    type: string;           // Event category
+    id_version: number;
+    event_name: string;
+    priority: number;       // Priority level
+    enabled: boolean;       // Notification enabled
+  }>;
+}
+```
+
+## Example Configuration
+
+```json
+{
+  "router": {
+    "device": "Flow Sensor",
+    "brand": "Siemens",
+    "version": "3.2.1"
+  },
+  "objets": [
+    {
+      "id": 101,
+      "type": "connectivity",
+      "id_version": 12,
+      "event_name": "Connection Lost",
+      "priority": 1,
+      "enabled": true
+    },
+    {
+      "id": 102,
+      "type": "sensor",
+      "id_version": 12,
+      "event_name": "Low Battery",
+      "priority": 2,
+      "enabled": true
+    },
+    {
+      "id": 103,
+      "type": "measurement",
+      "id_version": 12,
+      "event_name": "Calibration Required",
+      "priority": 3,
+      "enabled": false
+    }
+  ]
+}
+```
+
+## API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|----------|
+| `/ConfigNotify` | GET | Retrieve notification configurations |
+| `/ConfigNotify` | POST | Save updated configurations |
+
+## Access Control
+
+The `access` prop (from `src/modules/ConfigNotifications/views/index.jsx:13`) controls:
+
+- Edit permissions for priority and enabled fields
+- Save button availability
+
+<Note>
+  Based on the code, `hasAccess` is currently set to `false` by default. Contact your administrator to enable notification editing.
+</Note>
+
+## MQTT Integration
+
+Notifications integrate with MQTT for real-time event distribution:
+
+### Source Generation
+
+```javascript
+// Groups events into batches of 47 records
+const sources = await generateSources(
+  allEvents,
+  modifiedEvents,
+  47  // Records per group
+);
+```
+
+### MQTT Publishing
+
+```javascript
+// Sends configuration to MQTT broker
+await sendConfigMqtt(
+  sources,
+  deviceType,
+  versionId
+);
+```
+
+<Warning>
+  MQTT publishing is currently disabled in production code (line 69 of Accordion.jsx is commented). This is intentional for safety.
+</Warning>
+
+## Filtering and Search
+
+The table component supports:
+
+- **Row virtualization**: Efficient rendering of large event lists
+- **Toolbar search**: Find specific events quickly
+- **Compact density**: More rows visible on screen
+
+## Loading States
+
+<Steps>
+  <Step title="Initial State">
+    All accordions collapsed, no data loaded.
+  </Step>
+  
+  <Step title="Accordion Expansion">
+    Clicking an accordion triggers:
+    1. Loading indicator appears
+    2. Event data loads (300ms delay)
+    3. Table renders with data
+  </Step>
+  
+  <Step title="Accordion Collapse">
+    Table data is cleared to save memory.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Cannot Edit Events">
+    Check `hasAccess` permission. Contact administrator if editing is disabled.
+  </Accordion>
+  
+  <Accordion title="Changes Not Saving">
+    - Verify you clicked **Guardar** button
+    - Check for error messages in confirmation dialog
+    - Ensure you have edit permissions
+  </Accordion>
+  
+  <Accordion title="Events Not Loading">
+    - Check network connectivity
+    - Verify backend `/ConfigNotify` endpoint is accessible
+    - Review browser console for errors
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<Card title="Priority Levels" icon="layer-group">
+  Define a consistent priority scheme:
+  
+  - **Priority 1**: Critical - Immediate attention required
+  - **Priority 2**: High - Action needed within hours
+  - **Priority 3**: Medium - Action needed within day
+  - **Priority 4**: Low - Informational only
+</Card>
+
+<Card title="Event Selection" icon="check-square">
+  Enable only relevant events:
+  
+  - Avoid notification fatigue
+  - Focus on actionable events
+  - Disable verbose informational events in production
+</Card>
+
+<Card title="Testing" icon="vial">
+  Test before deploying:
+  
+  1. Enable events in test environment
+  2. Trigger test events
+  3. Verify notifications arrive
+  4. Adjust priorities based on actual urgency
+</Card>
+
+## See Also
+
+- [Alarms](/configuration/alarms) - Configure threshold-based alerts
+- [Variables](/configuration/variables) - Monitor variable values

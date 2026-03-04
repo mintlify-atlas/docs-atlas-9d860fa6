@@ -1,0 +1,292 @@
+---
+title: 'DoughnutChart'
+description: 'Pie and doughnut chart component for displaying categorical data distribution'
+icon: 'chart-pie'
+---
+
+The `DoughnutChart` component renders pie or doughnut charts using Apache ECharts. It displays categorical data with automatic percentage calculations and interactive tooltips.
+
+## Basic Usage
+
+```jsx
+import DoughnutChart from '@/modules/Charts/components/DoughnutChart'
+
+const data = [
+  { value: 335, name: 'Direct' },
+  { value: 310, name: 'Email' },
+  { value: 234, name: 'Affiliate' },
+  { value: 135, name: 'Video' },
+  { value: 548, name: 'Search Engine' }
+]
+
+<DoughnutChart data={data} />
+```
+
+## Props
+
+<ParamField path="data" type="array" required>
+  Array of data objects for chart segments. Each object should have:
+  - `value` (number) - The numeric value for the segment
+  - `name` (string) - The label for the segment
+  - `itemStyle` (object, optional) - Custom styling with `color` property
+</ParamField>
+
+## Data Format
+
+### Basic Data Array
+
+```javascript
+const data = [
+  { value: 1048, name: 'Search Engine' },
+  { value: 735, name: 'Direct' },
+  { value: 580, name: 'Email' },
+  { value: 484, name: 'Union Ads' },
+  { value: 300, name: 'Video Ads' }
+]
+```
+
+### With Custom Colors
+
+```javascript
+const data = [
+  { 
+    value: 335, 
+    name: 'Category A',
+    itemStyle: { color: '#5470c6' }
+  },
+  { 
+    value: 310, 
+    name: 'Category B',
+    itemStyle: { color: '#91cc75' }
+  },
+  { 
+    value: 234, 
+    name: 'Category C',
+    itemStyle: { color: '#fac858' }
+  }
+]
+```
+
+## Examples
+
+### Sales Distribution
+
+```jsx
+const salesData = [
+  { value: 45000, name: 'Online' },
+  { value: 32000, name: 'Retail' },
+  { value: 18000, name: 'Wholesale' },
+  { value: 5000, name: 'Other' }
+]
+
+<DoughnutChart data={salesData} />
+```
+
+### Resource Usage
+
+```jsx
+const resourceData = [
+  { value: 256, name: 'Used', itemStyle: { color: '#ef4444' } },
+  { value: 512, name: 'Available', itemStyle: { color: '#10b981' } }
+]
+
+<DoughnutChart data={resourceData} />
+```
+
+### Empty Data
+
+```jsx
+<DoughnutChart data={[]} />
+```
+
+Displays an empty chart when no data is provided.
+
+## Chart Configuration
+
+### Pie Type
+
+The chart is configured as a doughnut (hollow center) by default:
+
+```javascript
+series: [{
+  type: 'pie',
+  radius: ['0%', '70%']  // Inner and outer radius
+}]
+```
+
+To create a solid pie chart, you can modify the radius:
+- **Doughnut**: `['40%', '70%']` - hollow center
+- **Solid pie**: `['0%', '70%']` - filled center
+- **Thin ring**: `['60%', '70%']` - thin outer ring
+
+### Tooltip
+
+Interactive tooltips show segment details on hover:
+
+```javascript
+tooltip: {
+  trigger: 'item',
+  formatter: '{b}: {c} ({d}%)'
+}
+```
+
+**Format breakdown**:
+- `{b}` - Category name
+- `{c}` - Value
+- `{d}%` - Percentage of total
+
+**Example output**: "Email: 310 (19.7%)"
+
+### Legend
+
+Horizontal legend centered at bottom:
+
+```javascript
+legend: {
+  orient: 'horizontal',
+  left: 'center'
+}
+```
+
+### Emphasis Effect
+
+Segments highlight on hover with shadow effect:
+
+```javascript
+emphasis: {
+  itemStyle: {
+    shadowBlur: 10,
+    shadowOffsetX: 0,
+    shadowColor: 'rgba(0, 0, 0, 0.5)'
+  }
+}
+```
+
+## Configuration Schema
+
+The component has a Zod validation schema for configuration:
+
+```javascript
+import { DoughnutChartschema } from '@/modules/Charts/schemas/DoughnutChartSchema'
+
+const config = {
+  title: 'Water Usage by Zone',
+  categoryName: 'Zone A',
+  colorCategory: '#3b82f6',
+  idVar: 123,
+  lastValue: true
+}
+
+DoughnutChartschema.parse(config)
+```
+
+### Schema Fields
+
+<ParamField path="title" type="string" required>
+  Chart title (minimum 1 character).
+</ParamField>
+
+<ParamField path="categoryName" type="string" required>
+  Category name (minimum 1 character).
+</ParamField>
+
+<ParamField path="colorCategory" type="string" required>
+  Category color (minimum 1 character).
+</ParamField>
+
+<ParamField path="idVar" type="number" required>
+  Variable ID (minimum 1).
+</ParamField>
+
+<ParamField path="lastValue" type="boolean" required>
+  Whether to use the last value or date range.
+</ParamField>
+
+<ParamField path="startDate" type="string">
+  Start date for data range. Required when `lastValue` is `false`.
+</ParamField>
+
+<ParamField path="endDate" type="string">
+  End date for data range. Required when `lastValue` is `false`.
+</ParamField>
+
+**Validation Rules**:
+- When `lastValue` is `false`, both `startDate` and `endDate` are required
+- All required fields must have non-empty values
+
+## Customization
+
+### Colors
+
+ECharts automatically assigns colors from its default palette. To customize:
+
+```javascript
+const data = [
+  { 
+    value: 335, 
+    name: 'Category A',
+    itemStyle: { color: '#ff6b6b' }
+  },
+  { 
+    value: 310, 
+    name: 'Category B',
+    itemStyle: { color: '#4ecdc4' }
+  }
+]
+```
+
+### Ring Size
+
+Modify the `radius` array in the component:
+
+```javascript
+// Thin doughnut
+radius: ['50%', '60%']
+
+// Wide doughnut
+radius: ['30%', '80%']
+
+// Full pie
+radius: ['0%', '70%']
+```
+
+## Use Cases
+
+- **Distribution analysis**: Sales by channel, traffic sources
+- **Resource allocation**: Budget distribution, capacity usage
+- **Categorical comparison**: Market share, poll results
+- **Composition breakdown**: Material components, time allocation
+- **Status overview**: Task completion, issue categories
+
+## Interactivity
+
+- **Hover**: Segments enlarge and show shadow
+- **Tooltip**: Displays name, value, and percentage
+- **Legend**: Click to show/hide segments
+- **Animation**: Smooth transitions on data updates
+
+## Container Requirements
+
+The chart automatically fills its container:
+
+```jsx
+<div style={{ width: '400px', height: '400px' }}>
+  <DoughnutChart data={data} />
+</div>
+```
+
+**Recommendations**:
+- Minimum size: 300x300px
+- Allow space for legend at bottom
+- Chart auto-resizes on window resize
+- Works best in containers with similar width/height
+
+## Empty State
+
+When `data` is `null`, `undefined`, or an empty array:
+- Chart renders with no segments
+- Legend remains visible but empty
+- Tooltip still functional (but no data to show)
+
+See: [DoughnutChart.jsx](/home/daytona/workspace/source/src/modules/Charts/components/DoughnutChart.jsx)  
+See: [DoughnutChartSchema.js](/home/daytona/workspace/source/src/modules/Charts/schemas/DoughnutChartSchema.js)

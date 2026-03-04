@@ -1,0 +1,291 @@
+---
+title: Working with Maps
+description: Create interactive maps with markers and variable monitoring
+icon: "map"
+---
+
+Mas Agua's mapping feature allows you to visualize geographic locations with interactive markers that display real-time data from InfluxDB variables.
+
+## Overview
+
+The mapping system enables you to:
+- Create interactive maps centered on specific coordinates
+- Add markers at precise latitude/longitude positions
+- Associate InfluxDB variables with each marker for real-time data display
+- Edit and manage existing maps
+- View maps with live data updates
+
+## Accessing Maps Management
+
+<Steps>
+  <Step title="Navigate to Maps List">
+    Go to `/maps` to view all existing maps in your system.
+  </Step>
+
+  <Step title="Review Map Information">
+    The maps table displays:
+    - **ID**: Unique map identifier
+    - **Nombre**: Map name
+    - **Latitud**: Center latitude coordinate
+    - **Longitud**: Center longitude coordinate
+    - **Creado el**: Creation timestamp
+    - **Acciones**: Edit button
+  </Step>
+</Steps>
+
+## Creating a New Map
+
+<Steps>
+  <Step title="Start Map Creation">
+    From `/maps`, click the **"Crear mapa"** button. This navigates to `/map/create`.
+  </Step>
+
+  <Step title="Configure Initial View">
+    The map initializes with default coordinates:
+    - Latitude: -30.716256365145455
+    - Longitude: -62.005196197872266
+    - Zoom level: 14
+    
+    Use the map controls to pan and zoom to your desired starting view.
+  </Step>
+
+  <Step title="Add Your First Marker">
+    In the marker configuration panel at the top:
+    
+    1. **Nombre del marcador**: Enter a descriptive name for the marker
+    2. **Latitud**: Enter the latitude coordinate (required)
+    3. **Longitud**: Enter the longitude coordinate (required)
+    4. **Seleccione una variable**: Choose an InfluxDB variable to display at this location
+    5. Click **"Agregar Marcador"**
+  </Step>
+
+  <Step title="Add Additional Markers">
+    Repeat the process to add more markers. Each marker must have:
+    - A unique name (duplicate names are not allowed)
+    - Valid latitude coordinate
+    - Valid longitude coordinate
+    - An associated InfluxDB variable
+  </Step>
+
+  <Step title="Adjust Map View">
+    Pan and zoom the map to frame all your markers optimally. The current view state (position, zoom, bearing, pitch) will be saved.
+  </Step>
+
+  <Step title="Save the Map">
+    Click the **"Guardar"** button. A dialog will prompt you to enter a map name.
+    
+    Enter a descriptive name and click **"Guardar"** to create the map.
+  </Step>
+</Steps>
+
+<Note>
+  You must add at least one marker before saving a map. The system validates this requirement.
+</Note>
+
+## Understanding Marker Configuration
+
+Each marker stores:
+
+```javascript
+// Marker structure from src/modules/Map/Views/MapView.jsx:35-47
+{
+  name: "Marker Name",
+  latitude: -30.716256,
+  longitude: -62.005196,
+  popupInfo: {
+    lat: -30.716256,
+    lng: -62.005196,
+    idVar: 123,  // InfluxDB variable ID
+    data: null   // Populated with variable metadata
+  }
+}
+```
+
+## Editing Existing Maps
+
+<Steps>
+  <Step title="Open Map Editor">
+    From `/maps`, find your map in the table and click **"Editar"**. This navigates to `/map/edit?id={mapId}`.
+  </Step>
+
+  <Step title="Review Current Configuration">
+    The editor loads:
+    - Current map name in the header
+    - All existing markers on the map
+    - Saved view state (position and zoom)
+  </Step>
+
+  <Step title="Modify Markers">
+    - Add new markers using the configuration panel
+    - Drag existing markers if `draggable={true}` is enabled
+    - Update marker variables and names as needed
+  </Step>
+
+  <Step title="Adjust Map View">
+    Pan and zoom to update the default view for this map.
+  </Step>
+
+  <Step title="Save Changes">
+    Click **"Guardar"**. You can update the map name if desired, then confirm to save.
+  </Step>
+</Steps>
+
+## Viewing Maps with Live Data
+
+<Steps>
+  <Step title="Access Map View">
+    Navigate to `/map?id={mapId}` to view a map in read-only mode with live data.
+  </Step>
+
+  <Step title="Interact with Markers">
+    Click on any marker to view:
+    - Marker name
+    - Current variable value
+    - Associated variable metadata
+  </Step>
+</Steps>
+
+<Tip>
+  In view mode, markers are not draggable and display real-time data from InfluxDB. This provides a live monitoring dashboard for geographically distributed sensors.
+</Tip>
+
+## Map Component Architecture
+
+The mapping system uses several components:
+
+- **MapBase** (src/modules/Map/Components/MapBase.jsx): Core map rendering component
+- **Pin** (src/modules/Map/Components/Pin.jsx): Individual marker component
+- **ControlPanel** (src/modules/Map/Components/ControlPanel.jsx): Map controls overlay
+
+### MapBase Props
+
+Key configuration options:
+
+```jsx
+<MapBase
+  height="100%"           // Map container height
+  markers={markers}       // Array of marker objects
+  setMarkers={setMarkers} // Update function
+  viewState={viewState}   // Camera position/zoom
+  setViewState={setViewState}
+  controlPanel={true}     // Show/hide controls
+  draggable={true}        // Enable marker dragging
+  withInfo={false}        // Show info popups
+/>
+```
+
+## Variable Selection
+
+The variable selector uses the `SelectVars` component:
+
+<Steps>
+  <Step title="Click Variable Selector">
+    In the marker configuration, click the **"Seleccione una variable"** dropdown.
+  </Step>
+
+  <Step title="Browse Available Variables">
+    The selector displays all available InfluxDB variables configured in your system.
+  </Step>
+
+  <Step title="Select Variable">
+    Choose the variable that will provide data for this marker location.
+  </Step>
+</Steps>
+
+## Best Practices
+
+### Marker Placement
+
+<Warning>
+  Ensure latitude and longitude coordinates are accurate. Incorrect coordinates will place markers in wrong locations.
+</Warning>
+
+- Use precise coordinates (6+ decimal places for meter-level accuracy)
+- Verify coordinates before saving (use online tools like Google Maps)
+- Group related markers on the same map
+- Use descriptive marker names that indicate location or equipment
+
+### Map Organization
+
+- Create separate maps for different geographic areas or systems
+- Use consistent naming conventions for markers
+- Set appropriate default zoom levels to show all markers
+- Center maps to display all important markers in the default view
+
+### Variable Assignment
+
+- Associate each marker with its most relevant variable
+- Ensure variables are actively receiving data before deployment
+- Use variables with appropriate update frequencies for your use case
+- Consider variable units and display formatting
+
+## Advanced Features
+
+### View State Configuration
+
+The view state controls map camera:
+
+```javascript
+{
+  longitude: -62.005196,  // Center longitude
+  latitude: -30.716256,   // Center latitude
+  zoom: 14,               // Zoom level (0-22)
+  bearing: 0,             // Rotation angle
+  pitch: 0                // Tilt angle
+}
+```
+
+### Marker Validation
+
+The system validates:
+- Unique marker names per map
+- Required fields (name, lat, lng, variable)
+- Valid coordinate ranges
+- Variable existence
+
+## Troubleshooting
+
+**Marker not appearing**
+- Check that latitude/longitude are valid numbers
+- Verify coordinates are within expected ranges (-90 to 90 for lat, -180 to 180 for lng)
+- Ensure marker was successfully added to the markers array
+
+**"El marcador ya existe" error**
+- Each marker name must be unique within a map
+- Choose a different name or edit the existing marker
+
+**"Debe haber al menos un marcador" error**
+- Maps require at least one marker
+- Add markers before attempting to save
+
+**Map not loading in edit mode**
+- Verify the map ID in the URL is correct
+- Check browser console for errors
+- Ensure backend API is accessible
+
+**Variable data not displaying**
+- Confirm the variable is active and receiving data
+- Check InfluxDB connection
+- Verify variable permissions and access
+
+**Cannot save map changes**
+- Ensure all required fields are filled
+- Check for validation errors in form fields
+- Verify you have edit permissions
+
+## Use Cases
+
+**Infrastructure Monitoring**
+- Map pump stations with flow rate variables
+- Track tank levels across multiple locations
+- Monitor pressure at distribution points
+
+**Environmental Monitoring**
+- Display temperature sensors across a facility
+- Track water quality at multiple sampling points
+- Monitor rainfall at different zones
+
+**Asset Tracking**
+- Show equipment status at various sites
+- Display real-time metrics from remote sensors
+- Monitor distributed control systems

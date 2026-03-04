@@ -1,0 +1,241 @@
+---
+title: 'GaugeSpeed'
+description: 'Speedometer-style gauge component for displaying metrics with min/max ranges'
+icon: 'gauge-high'
+---
+
+The `GaugeSpeed` component renders a speedometer-style gauge chart using Apache ECharts. It features a needle pointer, progress arc, and customizable labels.
+
+## Basic Usage
+
+```jsx
+import GaugeSpeed from '@/modules/Charts/components/GaugeSpeed'
+
+<GaugeSpeed
+  value={75}
+  maxValue={100}
+  color="#5c5ac7"
+  unidad="km/h"
+  description="Velocidad"
+/>
+```
+
+## Props
+
+<ParamField path="value" type="number" required>
+  The current value to display on the gauge. Must be a valid number.
+</ParamField>
+
+<ParamField path="maxValue" type="number" required>
+  The maximum value for the gauge scale. Determines the scale range from 0 to `maxValue`.
+</ParamField>
+
+<ParamField path="color" type="string" default="#5c5ac7">
+  The primary color for the gauge (progress arc, needle, and anchor). Accepts hex color codes.
+</ParamField>
+
+<ParamField path="unidad" type="string" default="">
+  Unit label to display after the value (e.g., "km/h", "RPM", "PSI").
+</ParamField>
+
+<ParamField path="description" type="string" default="">
+  Subtitle text displayed below the value.
+</ParamField>
+
+<ParamField path="description2" type="string" default="">
+  Secondary label shown at the 75% position above the gauge.
+</ParamField>
+
+## Examples
+
+### Speed Gauge
+
+```jsx
+<GaugeSpeed
+  value={120}
+  maxValue={200}
+  color="#ef4444"
+  unidad="km/h"
+  description="Velocidad actual"
+  description2="Velocidad"
+/>
+```
+
+### Pressure Gauge
+
+```jsx
+<GaugeSpeed
+  value={45}
+  maxValue={100}
+  color="#10b981"
+  unidad="PSI"
+  description="Presión del sistema"
+/>
+```
+
+### RPM Gauge
+
+```jsx
+<GaugeSpeed
+  value={3500}
+  maxValue={8000}
+  color="#f59e0b"
+  unidad="RPM"
+  description="Revoluciones"
+  description2="Motor"
+/>
+```
+
+### No Data State
+
+```jsx
+<GaugeSpeed
+  value={null}
+  maxValue={100}
+  color="#6366f1"
+  unidad="L/min"
+  description="Caudal"
+/>
+```
+
+Displays **"Sin datos"** with gray styling when value is invalid.
+
+## Visual Elements
+
+### Progress Arc
+
+The colored arc shows the current value progress:
+
+- **Width**: 22px
+- **Style**: Rounded cap
+- **Gradient**: Three-color linear gradient when data is present
+  - Start (offset 0): `#c7d2fe` (light indigo)
+  - Middle (offset 0.5): Your custom color
+  - End (offset 1): `#312e81` (dark indigo)
+- **Offline**: Solid gray `#cbd5e1` when no data
+
+### Background Ring
+
+- **Width**: 22px
+- **Color**: `#657EB333` (semi-transparent blue-gray)
+- **Full arc**: Always visible from 0° to 360°
+
+### Needle Pointer
+
+- **Length**: 65% of gauge radius
+- **Width**: 6px
+- **Color**: Matches primary color (or gray when offline)
+
+### Center Anchor
+
+- **Size**: 26px diameter
+- **Fill**: `#111827` (dark gray)
+- **Border**: 8px wide, matches primary color
+- **Style**: Circular hub at needle base
+
+### Scale Markers
+
+- **Split lines**: 10px length, 2px width, gray color `#9ca3af`
+- **Labels**: 10px font size, positioned 25px from arc
+- **Ticks**: Hidden
+
+## Gauge Configuration
+
+### Arc Angles
+
+- **Start angle**: 210° (bottom-left)
+- **End angle**: -30° (bottom-right)
+- **Total arc**: 240° sweep
+
+### Positioning
+
+- **Center**: `['50%', '50%']` (centered)
+- **Radius**: 95% of container
+- **Value text offset**: 85% from center
+- **Description offset**: 75% from center
+
+## Text Display
+
+### Value Formatting
+
+The main value is displayed with rich text formatting:
+
+```jsx
+// With data
+{value|75.00 km/h}
+{sub|Velocidad actual}
+
+// Without data
+{value|Sin datos}
+{sub|Velocidad actual}
+```
+
+### Text Styles
+
+<ParamField path="value" type="rich text style">
+  - **Font size**: 24px
+  - **Font weight**: Bold
+  - **Color**: `#111827` (dark)
+</ParamField>
+
+<ParamField path="sub" type="rich text style">
+  - **Font size**: 22px
+  - **Color**: `#4b5563` (medium gray)
+</ParamField>
+
+## Data Validation
+
+The component uses the `isValidNumber` helper to validate values:
+
+```jsx
+const isValidNumber = (v) =>
+  v !== null &&
+  v !== undefined &&
+  v !== '' &&
+  !isNaN(Number(v))
+```
+
+**Behavior**:
+- Valid numbers are converted to Number type
+- Invalid values default to 0 for display
+- Invalid `maxValue` defaults to 1
+- Colors change to gray when value is invalid
+
+## Offline/Error State
+
+When `value` is invalid:
+
+- Progress arc: Solid gray `#cbd5e1`
+- Needle: Gray `#9ca3af`
+- Anchor border: Gray `#9ca3af`
+- Text: "Sin datos" (No data)
+- Gauge reads 0 on the scale
+
+## Use Cases
+
+- **Speed indicators**: Vehicle speed, wind speed, flow rate
+- **Performance metrics**: CPU usage, memory usage, bandwidth
+- **Industrial monitoring**: Pressure, temperature, RPM
+- **Progress tracking**: Task completion, goal achievement
+- **Capacity indicators**: Tank levels, storage usage
+
+## Container Requirements
+
+The gauge automatically fills its container:
+
+```jsx
+<div style={{ width: '300px', height: '300px' }}>
+  <GaugeSpeed
+    value={75}
+    maxValue={100}
+    color="#5c5ac7"
+  />
+</div>
+```
+
+**Recommendations**:
+- Use square containers for best visual appearance
+- Minimum recommended size: 200x200px
+- Gauge auto-resizes on window resize events
+
+See: [GaugeSpeed.jsx](/home/daytona/workspace/source/src/modules/Charts/components/GaugeSpeed.jsx)

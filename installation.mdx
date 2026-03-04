@@ -1,0 +1,266 @@
+---
+title: Installation
+description: Install Mas Agua for web or desktop deployment
+---
+
+Mas Agua can be deployed as a web application or as a native desktop application. Choose the installation method that best fits your needs.
+
+## Prerequisites
+
+Before installing Mas Agua, ensure you have:
+
+- **Node.js** 18 or higher
+- **npm** or **yarn** package manager
+- **InfluxDB** instance (for data storage)
+- **Backend API** endpoint configured
+
+<Note>
+Mas Agua requires a backend API server and InfluxDB database to function. Ensure these services are running and accessible before starting the application.
+</Note>
+
+## Web Application Installation
+
+The web version runs in any modern browser and can be deployed using Docker or built manually.
+
+### Option 1: Docker Deployment (Recommended)
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone <repository-url>
+    cd mas-agua
+    ```
+  </Step>
+  
+  <Step title="Configure environment variables">
+    Create a `.env` file in the project root:
+    
+    ```bash
+    VITE_APP_NAME=Mas Agua
+    VITE_ENTORNO=production
+    SECRET=your-secret-key
+    ```
+    
+    <Warning>
+    Replace `your-secret-key` with a secure random string. Never commit real secrets to version control.
+    </Warning>
+  </Step>
+  
+  <Step title="Build and run with Docker">
+    ```bash
+    docker build \
+      --build-arg VITE_APP_NAME="Mas Agua" \
+      --build-arg VITE_ENTORNO=production \
+      --build-arg SECRET=your-secret-key \
+      -t masagua-web .
+    
+    docker run -d -p 80:80 masagua-web
+    ```
+    
+    The application will be available at `http://localhost`
+  </Step>
+</Steps>
+
+### Option 2: Manual Build
+
+<Steps>
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+  
+  <Step title="Build the application">
+    ```bash
+    npm run build
+    ```
+    
+    This creates an optimized production build in the `dist/` directory.
+  </Step>
+  
+  <Step title="Deploy to web server">
+    Copy the `dist/` folder contents to your web server (Nginx, Apache, etc.).
+    
+    **Example Nginx configuration:**
+    
+    ```nginx
+    server {
+        listen 80;
+        server_name _;
+        root /usr/share/nginx/html;
+        index index.html;
+
+        # Static assets
+        location ~ ^/(assets|.*\.js|.*\.css|.*\.woff2?|.*\.ttf|.*\.svg|.*\.ico)$ {
+            try_files $uri =404;
+            access_log off;
+        }
+
+        # SPA fallback
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+    }
+    ```
+  </Step>
+</Steps>
+
+## Desktop Application Installation
+
+The desktop version provides a native application experience using Tauri.
+
+### System Requirements
+
+<Tabs>
+  <Tab title="Windows">
+    - Windows 10 or higher
+    - [Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe)
+  </Tab>
+  
+  <Tab title="macOS">
+    - macOS 10.15 (Catalina) or higher
+    - Xcode Command Line Tools
+  </Tab>
+  
+  <Tab title="Linux">
+    - Ubuntu 20.04 or equivalent
+    - webkit2gtk, libssl, and other system dependencies
+    
+    ```bash
+    sudo apt install libwebkit2gtk-4.0-dev \
+      build-essential \
+      curl \
+      wget \
+      libssl-dev \
+      libgtk-3-dev \
+      libayatana-appindicator3-dev \
+      librsvg2-dev
+    ```
+  </Tab>
+</Tabs>
+
+### Building from Source
+
+<Steps>
+  <Step title="Install Rust">
+    Tauri requires Rust to be installed:
+    
+    ```bash
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    ```
+  </Step>
+  
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+  
+  <Step title="Run in development mode">
+    ```bash
+    npm run tauri dev
+    ```
+    
+    This launches the desktop application in development mode with hot-reload enabled.
+  </Step>
+  
+  <Step title="Build production installer">
+    ```bash
+    npm run tauri build
+    ```
+    
+    Installers will be created in `src-tauri/target/release/bundle/`
+  </Step>
+</Steps>
+
+### Desktop Features
+
+The desktop version includes additional capabilities:
+
+- **Auto-updater** - Automatic application updates
+- **System tray integration** - Run in background with tray icon
+- **Persistent storage** - Local configuration storage using Tauri plugin-store
+- **Process management** - Better control over application lifecycle
+
+<Note>
+The desktop application version is `1.0.5` (defined in `src-tauri/Cargo.toml`). The auto-updater checks for new versions automatically.
+</Note>
+
+## Development Mode
+
+For development and testing:
+
+```bash
+npm run dev
+```
+
+This starts the Vite development server on port `1420` with hot module replacement.
+
+**Configuration details:**
+
+```javascript
+// vite.config.js
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    host: true,
+    port: 1420,
+    strictPort: true,
+  }
+})
+```
+
+## Verifying Installation
+
+<Steps>
+  <Step title="Check application loads">
+    Open the application in your browser (web) or launch the desktop app.
+  </Step>
+  
+  <Step title="Test backend connectivity">
+    Navigate to the login page. If it loads without errors, the frontend is working correctly.
+  </Step>
+  
+  <Step title="Verify data connection">
+    After logging in, check if dashboards display data. This confirms InfluxDB connectivity through the backend API.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Port 1420 already in use">
+    Another process is using the development port. Either:
+    - Stop the other process
+    - Change the port in `vite.config.js`
+  </Accordion>
+  
+  <Accordion title="Docker build fails">
+    Ensure all build arguments are provided:
+    ```bash
+    docker build \
+      --build-arg VITE_APP_NAME="Mas Agua" \
+      --build-arg VITE_ENTORNO=production \
+      --build-arg SECRET=your-secret \
+      -t masagua-web .
+    ```
+  </Accordion>
+  
+  <Accordion title="Tauri build errors on Linux">
+    Install all required system dependencies:
+    ```bash
+    sudo apt install libwebkit2gtk-4.0-dev build-essential curl wget \
+      libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+    ```
+  </Accordion>
+  
+  <Accordion title="White screen after deployment">
+    This is typically a routing issue. Ensure your web server is configured to redirect all routes to `index.html` for the SPA to work correctly.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<Card title="Quick Start Guide" icon="rocket" href="/quickstart">
+  Learn how to create your first dashboard and start monitoring your water systems
+</Card>

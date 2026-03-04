@@ -1,0 +1,318 @@
+---
+title: PLC Profiles
+description: Configure connections to Siemens programmable logic controllers
+---
+
+## Overview
+
+PLC Profiles define connections to Siemens programmable logic controllers (LOGO 7, LOGO 8, S7-1200) and map PLC memory bytes and bits to InfluxDB fields.
+
+## Accessing PLC Configuration
+
+Navigate to **Configuration > Perfil PLC** to manage PLC profiles.
+
+## Supported PLC Models
+
+<CardGroup cols={3}>
+  <Card title="LOGO 7" icon="microchip">
+    Siemens LOGO! 7 series
+  </Card>
+  <Card title="LOGO 8" icon="microchip">
+    Siemens LOGO! 8 series
+  </Card>
+  <Card title="S7-1200" icon="microchip">
+    Siemens S7-1200 series
+  </Card>
+</CardGroup>
+
+## Creating a PLC Profile
+
+<Steps>
+  <Step title="Open PLC Modal">
+    Click **Crear Perfil de PLC** to open the configuration form.
+  </Step>
+  
+  <Step title="Configure Basic Settings">
+    <ParamField path="topic" type="string" required>
+      MQTT topic for publishing PLC data (minimum 3 characters)
+    </ParamField>
+    
+    <ParamField path="influx" type="select" required>
+      Target InfluxDB bucket:
+      - `Sensors_Morteros_Interna` - Mas Agua Morteros
+      - `Sensors_Externos` - Mas Agua Externos
+      - `externos` - Energia Externos
+    </ParamField>
+  </Step>
+  
+  <Step title="Configure PLC Connection">
+    <ParamField path="PLCModel" type="select" required>
+      PLC model:
+      - `LOGO_7` - Siemens LOGO! 7
+      - `LOGO_8` - Siemens LOGO! 8
+      - `S7_1200` - Siemens S7-1200
+    </ParamField>
+    
+    <ParamField path="ip" type="string" required>
+      PLC IP address (valid IPv4 format, e.g., "192.168.1.100")
+    </ParamField>
+    
+    <ParamField path="serviceName" type="string" required>
+      Service name (single word, no spaces, minimum 3 characters)
+    </ParamField>
+    
+    <ParamField path="rack" type="number" required>
+      PLC rack number (positive integer)
+    </ParamField>
+    
+    <ParamField path="slot" type="number" required>
+      PLC slot number (positive integer)
+    </ParamField>
+  </Step>
+  
+  <Step title="Define Memory Points">
+    Specify byte ranges to read from PLC memory:
+    
+    1. Enter **Inicio** (start byte)
+    2. Enter **Fin** (end byte)
+    3. Click **Agregar puntos**
+    4. Repeat to add multiple ranges
+    
+    Example: Points `{0, 10}` and `{20, 25}` will read bytes 0-10 and 20-25.
+  </Step>
+  
+  <Step title="Map Variables to Bits">
+    For each variable:
+    
+    <ParamField path="byte" type="select" required>
+      Byte number (from configured point ranges)
+    </ParamField>
+    
+    <ParamField path="bit" type="select" required>
+      Bit position (0-7) within the byte
+    </ParamField>
+    
+    <ParamField path="type" type="select" required>
+      Data type:
+      - `BOOL` - Boolean (1 bit)
+      - `BYTE` - Unsigned byte (8 bits)
+      - `INT` - Signed integer (16 bits)
+      - `UINT` - Unsigned integer (16 bits)
+      - `FLOAT` - Floating point (32 bits)
+      - `STRING` - String data
+      - `LONG` - Signed long (32 bits)
+      - `ULONG` - Unsigned long (32 bits)
+      - `DOUBLE` - Double precision (64 bits)
+    </ParamField>
+    
+    <ParamField path="field" type="string" required>
+      InfluxDB field name for this variable
+    </ParamField>
+  </Step>
+  
+  <Step title="Save Profile">
+    Click **Crear perfil** to save the configuration.
+  </Step>
+</Steps>
+
+## Example Configuration
+
+```json
+{
+  "topic": "plc/water_treatment",
+  "influx": "Sensors_Morteros_Interna",
+  "PLCModel": "S7_1200",
+  "ip": "192.168.1.50",
+  "serviceName": "WaterTreatmentPLC",
+  "rack": 0,
+  "slot": 1,
+  "points": [
+    {"startPoint": 0, "endPoint": 10},
+    {"startPoint": 20, "endPoint": 25}
+  ],
+  "vars": [
+    {
+      "byte": 0,
+      "bit": 0,
+      "type": "BOOL",
+      "field": "pump_running"
+    },
+    {
+      "byte": 2,
+      "bit": 0,
+      "type": "FLOAT",
+      "field": "pressure"
+    },
+    {
+      "byte": 6,
+      "bit": 0,
+      "type": "INT",
+      "field": "flow_rate"
+    }
+  ]
+}
+```
+
+## Profile Status Management
+
+PLC profiles have three states:
+
+### Status 0: Inactive
+
+- Profile configured but not collecting data
+- Can be edited or deleted
+- Toggle switch to activate
+
+### Status 1: Active
+
+- Profile actively reading PLC data and reporting to InfluxDB
+- Cannot be edited or deleted (must deactivate first)
+- Toggle switch to deactivate
+
+### Status 2: Pending Upload
+
+- Profile created but service files not uploaded to server
+- Click **Subir** to complete deployment
+
+## Managing Profiles
+
+### Activate Profile
+
+<Warning>
+  Activating a profile starts data collection and InfluxDB reporting immediately.
+</Warning>
+
+1. Locate profile with Status = Inactive
+2. Click the status toggle switch
+3. Confirm activation
+
+### Deactivate Profile
+
+<Warning>
+  Deactivating stops data collection from the PLC.
+</Warning>
+
+1. Locate active profile
+2. Click the status toggle switch
+3. Confirm deactivation
+
+### Edit Profile
+
+1. Ensure profile is inactive (Status = 0)
+2. Click **Editar** button
+3. Modify configuration
+4. Click **Editar perfil**
+
+<Note>
+  Active profiles must be deactivated before editing.
+</Note>
+
+### Delete Profile
+
+1. Ensure profile is inactive
+2. Click **Eliminar** button
+3. Confirm deletion
+
+<Warning>
+  You cannot delete active profiles. Deactivate first.
+</Warning>
+
+## Validation Rules
+
+The form enforces these validation rules (from `src/modules/ProfilePLC/schemas/varsPLC.js:17`):
+
+<ParamField path="topic">
+  - Minimum 3 characters
+  - Must be string
+</ParamField>
+
+<ParamField path="influx">
+  - Must be one of: `Sensors_Morteros_Interna`, `Sensors_Externos`, `externos`
+</ParamField>
+
+<ParamField path="PLCModel">
+  - Must be one of: `LOGO_7`, `LOGO_8`, `S7_1200`
+</ParamField>
+
+<ParamField path="ip">
+  - Must be valid IPv4 address (regex validated)
+  - Example: `192.168.1.100`
+</ParamField>
+
+<ParamField path="serviceName">
+  - Minimum 3 characters
+  - Single word (no spaces)
+  - Alphanumeric characters only
+</ParamField>
+
+<ParamField path="rack">
+  - Positive integer
+  - Numeric value required
+</ParamField>
+
+<ParamField path="slot">
+  - Positive integer
+  - Numeric value required
+</ParamField>
+
+<ParamField path="points">
+  - `startPoint` must be ≤ `endPoint`
+  - Both must be positive integers
+</ParamField>
+
+## Byte and Bit Allocation
+
+### Constraints
+
+- Maximum bits available = (total bytes in ranges) × 8
+- Each byte has 8 bits (0-7)
+- Bit positions within a byte cannot be reused
+
+### Bit Availability
+
+The interface shows only available bits for each byte:
+
+```javascript
+// Byte 5 with bits 0, 2, 4 already used
+// Available bits: 1, 3, 5, 6, 7
+```
+
+If all bits in all bytes are allocated, the **Agregar variable** button becomes disabled.
+
+## API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|----------|
+| `/plc/create` | POST | Create new PLC profile |
+| `/plc/edit` | POST | Update existing profile |
+| `/plc/list` | GET | Get all profiles |
+| `/plc/service/:id` | GET | Get specific profile details |
+| `/plc/activate/:id` | GET | Activate profile |
+| `/plc/deactivate/:id` | GET | Deactivate profile |
+| `/plc/delete/:id` | GET | Delete profile files |
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Connection Errors">
+    - Verify PLC IP address is reachable
+    - Check rack and slot numbers match PLC hardware
+    - Ensure firewall allows connection on required ports
+  </Accordion>
+  
+  <Accordion title="Data Not Appearing in InfluxDB">
+    - Verify profile status is Active (Status = 1)
+    - Check correct InfluxDB bucket is selected
+    - Validate topic and field names
+  </Accordion>
+  
+  <Accordion title="Cannot Edit Profile">
+    - Profile must be deactivated first
+    - Check profile status in the table
+  </Accordion>
+</AccordionGroup>
+
+## See Also
+
+- [Variables](/configuration/variables) - Create variables from PLC data
+- [Alarms](/configuration/alarms) - Set alerts on PLC values

@@ -1,0 +1,278 @@
+---
+title: Loader
+description: A loading spinner component with optional logo display
+---
+
+## Overview
+
+Loader is a centered loading indicator component that displays an animated spinner with an optional company logo. It's designed to provide visual feedback during asynchronous operations or page loads.
+
+## Import
+
+```jsx
+import LoaderComponent from '@/components/Loader';
+```
+
+## Props
+
+<ParamField path="image" type="boolean" default="true">
+  Controls whether to display the COOPTECH logo above the spinner. Set to `false` to show only the spinner.
+</ParamField>
+
+## Features
+
+- Centered layout (flexbox centering)
+- Animated spinning indicator
+- Optional logo display
+- Smooth opacity transition
+- Responsive sizing
+- Tailwind CSS styling
+
+## Styling Details
+
+### Container
+- `flex flex-col` - Vertical flex layout
+- `items-center justify-center` - Center content horizontally and vertically
+- `min-h-full` - Minimum full height of parent container
+
+### Logo
+- `w-72` - Fixed width of 288px
+- `h-auto` - Automatic height to maintain aspect ratio
+- `mb-4` - Bottom margin of 16px
+
+### Spinner
+- `animate-spin` - Tailwind spin animation
+- `rounded-full` - Fully rounded circle
+- `h-12 w-12` - 48px x 48px size
+- `border-t-2 border-b-2` - 2px borders on top and bottom
+- `border-blue-500` - Blue color (#3B82F6)
+
+### Transition
+- `transition-opacity duration-1000` - 1 second fade transition
+- `opacity-100` - Full opacity
+
+## Usage Examples
+
+### Default Loader with Logo
+
+```jsx
+<LoaderComponent />
+```
+
+### Loader without Logo
+
+```jsx
+<LoaderComponent image={false} />
+```
+
+### Full Page Loading Screen
+
+```jsx
+function App() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate data loading
+    setTimeout(() => setIsLoading(false), 2000);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen">
+        <LoaderComponent />
+      </div>
+    );
+  }
+
+  return <MainContent />;
+}
+```
+
+### Conditional Loading in Component
+
+```jsx
+function Dashboard() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData()
+      .then(setData)
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <div className="container">
+      {loading ? (
+        <LoaderComponent />
+      ) : (
+        <DashboardContent data={data} />
+      )}
+    </div>
+  );
+}
+```
+
+### Modal Loading State
+
+```jsx
+function UploadModal({ isOpen, onClose }) {
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (file) => {
+    setUploading(true);
+    try {
+      await uploadFile(file);
+      onClose();
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose}>
+      {uploading ? (
+        <LoaderComponent image={false} />
+      ) : (
+        <UploadForm onSubmit={handleUpload} />
+      )}
+    </Modal>
+  );
+}
+```
+
+### Section Loading
+
+```jsx
+function DataSection() {
+  const { data, isLoading } = useQuery('dataKey', fetchData);
+
+  return (
+    <section className="min-h-[400px] relative">
+      {isLoading ? (
+        <LoaderComponent image={false} />
+      ) : (
+        <DataDisplay data={data} />
+      )}
+    </section>
+  );
+}
+```
+
+### Loading with Timeout Fallback
+
+```jsx
+function SmartLoader() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [showLogo, setShowLogo] = useState(true);
+
+  useEffect(() => {
+    // Hide logo after 2 seconds if still loading
+    const timer = setTimeout(() => {
+      setShowLogo(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  return <LoaderComponent image={showLogo} />;
+}
+```
+
+### Card Loading State
+
+```jsx
+function StatsCard({ title }) {
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    loadStats(title).then(setStats);
+  }, [title]);
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6 h-48">
+      <h3 className="text-lg font-semibold mb-4">{title}</h3>
+      {stats ? (
+        <div className="text-3xl font-bold">{stats.value}</div>
+      ) : (
+        <LoaderComponent image={false} />
+      )}
+    </div>
+  );
+}
+```
+
+### Route Loading
+
+```jsx
+import { Suspense } from 'react';
+import LoaderComponent from '@/components/Loader';
+
+const LazyComponent = lazy(() => import('./HeavyComponent'));
+
+function RouteWithLoading() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen">
+        <LoaderComponent />
+      </div>
+    }>
+      <LazyComponent />
+    </Suspense>
+  );
+}
+```
+
+## Logo Asset
+
+The component uses the COOPTECH logo from:
+```
+/src/assets/img/Logo_Cooptech.png
+```
+
+Ensure this asset is available in your project, or update the import path to use your own logo:
+
+```jsx
+import yourLogo from '@/assets/img/your-logo.png'
+
+// Then modify the component to use your logo
+<img src={yourLogo} alt='Your Company Logo' className='w-72 h-auto mb-4' />
+```
+
+## Customization
+
+### Custom Spinner Color
+
+Modify the spinner border color by editing the component:
+
+```jsx
+// Change border-blue-500 to your preferred color
+<div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500'></div>
+```
+
+### Custom Spinner Size
+
+```jsx
+// Change h-12 w-12 to your preferred size
+<div className='animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500'></div>
+```
+
+### Custom Logo Size
+
+```jsx
+// Change w-72 to your preferred width
+<img src={cooptech} alt='Logo' className='w-48 h-auto mb-4' />
+```
+
+## Source Location
+
+`/src/components/Loader/index.jsx:2`
+
+## Notes
+
+- The component is designed to fill its parent container with `min-h-full`
+- Ensure the parent container has a defined height for proper centering
+- The spinner animation is GPU-accelerated via Tailwind's `animate-spin`
+- The opacity transition provides a smooth entrance effect
+- Component uses Tailwind CSS - ensure Tailwind is configured in your project
+- Default export makes importing simple and consistent

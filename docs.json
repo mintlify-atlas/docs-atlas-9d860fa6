@@ -1,122 +1,126 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Mas Agua",
+  "theme": "aspen",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#218ecc",
+    "light": "#ebf7f8",
+    "dark": "#7c98b0"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/favicon.png",
+  "logo": {
+    "light": "/logo-light.png",
+    "dark": "/logo-dark.png"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/CspmIT/mas-agua-front"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/CspmIT/mas-agua-front"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get Started",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "introduction",
+              "installation",
+              "quickstart"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Core Features",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "features/dashboard",
+              "features/real-time-monitoring",
+              "features/charts-visualization",
+              "features/maps",
+              "features/diagram-editor"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Configuration",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "configuration/variables",
+              "configuration/plc-profiles",
+              "configuration/alarms",
+              "configuration/notifications",
+              "configuration/security"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "User Guides",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "guides/creating-dashboards",
+              "guides/managing-charts",
+              "guides/working-with-maps",
+              "guides/drawing-diagrams",
+              "guides/pump-monitoring",
+              "guides/alarm-management"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "Components",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Chart Components",
             "pages": [
-              "api-reference/introduction"
+              "components/charts/liquid-fill",
+              "components/charts/gauge",
+              "components/charts/boolean-chart",
+              "components/charts/pie-chart",
+              "components/charts/bar-chart",
+              "components/charts/line-chart"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "UI Components",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "components/ui/button-custom",
+              "components/ui/card-custom",
+              "components/ui/table-custom",
+              "components/ui/loader"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Desktop App",
+        "groups": [
+          {
+            "group": "Tauri Desktop",
+            "pages": [
+              "desktop/overview",
+              "desktop/installation",
+              "desktop/building",
+              "desktop/updates"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "API",
+            "pages": [
+              "api/overview",
+              "api/authentication",
+              "api/endpoints"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

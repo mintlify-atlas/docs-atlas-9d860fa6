@@ -1,0 +1,350 @@
+---
+title: Security Configuration
+description: Manage user accounts and role-based access control
+---
+
+## Overview
+
+The Security module manages user accounts and access control for the Mas Agua platform. Administrators can:
+
+- View all user accounts
+- Edit user credentials
+- Manage user profiles and permissions
+- Control account status (enabled/disabled)
+
+## Accessing Security Settings
+
+Navigate to **Configuration > Seguridad** to manage user accounts.
+
+## User Profiles
+
+Mas Agua supports four user profile levels:
+
+<CardGroup cols={2}>
+  <Card title="Super Admin" icon="crown">
+    Full system access and configuration control
+  </Card>
+  <Card title="Moderador" icon="user-shield">
+    Moderation and advanced user permissions
+  </Card>
+  <Card title="Operador" icon="user-gear">
+    Operational access for day-to-day tasks
+  </Card>
+  <Card title="Lector" icon="user">
+    Read-only access to dashboards and reports
+  </Card>
+</CardGroup>
+
+## User Table
+
+The user management interface displays:
+
+| Column | Description |
+|--------|-------------|
+| Nombre | Full name (first_name + last_name) |
+| Email | User email address |
+| Perfil | User profile (role) |
+| Contraseña | Password (hidden by default, toggle to view) |
+| Estado | Account status (Habilitado/Deshabilitado) |
+| Actions | Edit button |
+
+### Profile Mapping
+
+From `src/modules/configSecurity/utils/DataTable/ColumnsUsers.jsx:6`:
+
+```javascript
+{
+  1: 'Super Admin',
+  2: 'Moderador',
+  3: 'Lector',
+  4: 'Operador'
+}
+```
+
+## Viewing User Details
+
+### Password Visibility
+
+Click the visibility toggle icon to show/hide passwords:
+
+- **Hidden**: `••••••••`
+- **Visible**: Actual password text
+
+<Warning>
+  Passwords are stored and displayed in plain text. This is not a security best practice. Consider implementing password hashing in production.
+</Warning>
+
+### User Status
+
+User status is indicated by:
+
+- **Green circle + "Habilitado"**: Active user account
+- **Red circle + "Deshabilitado"**: Disabled user account
+
+Status values:
+- `status > 0`: Enabled
+- `status = 0`: Disabled
+
+## Editing Users
+
+<Steps>
+  <Step title="Open User Editor">
+    Click the **Edit** button (pencil icon) in the Actions column.
+  </Step>
+  
+  <Step title="Edit Form Opens in New Tab">
+    A new tab opens with the user edit form showing:
+    - User name (read-only)
+    - Password field (editable)
+  </Step>
+  
+  <Step title="Modify Password">
+    Enter the new password in the text field.
+    
+    <ParamField path="password" type="string" required>
+      User password (minimum validation required)
+    </ParamField>
+  </Step>
+  
+  <Step title="Save Changes">
+    Click **Guardar** to save the updated password.
+  </Step>
+  
+  <Step title="Confirmation">
+    Success message appears: "Se guardo correctamente los cambios del usuario"
+    
+    The tab closes automatically and returns to the user list.
+  </Step>
+</Steps>
+
+## User Data Structure
+
+From `src/modules/configSecurity/utils/DataTable/dataUser.js`:
+
+```typescript
+interface User {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  password: string;       // Plain text (security concern)
+  id_profile: number;     // 1=SuperAdmin, 2=Moderador, 3=Lector, 4=Operador
+  status: number;         // >0 = enabled, 0 = disabled
+}
+```
+
+## Example User Configuration
+
+```json
+{
+  "id": 42,
+  "first_name": "Juan",
+  "last_name": "Rodriguez",
+  "email": "juan.rodriguez@masagua.com",
+  "password": "SecurePass123",
+  "id_profile": 4,
+  "status": 1
+}
+```
+
+This represents:
+- User: Juan Rodriguez
+- Email: juan.rodriguez@masagua.com
+- Role: Operador (profile 4)
+- Status: Enabled (status 1)
+
+## Filtered User Display
+
+From `src/modules/configSecurity/views/index.jsx:42`:
+
+```javascript
+data={listUsers.filter((usr) => usr.id_profile !== 1)}
+```
+
+<Info>
+  Super Admin users (id_profile = 1) are hidden from the user management table.
+</Info>
+
+## Tab-Based Editing
+
+The user editing system uses a tab-based interface:
+
+### Tab Creation
+
+```javascript
+{
+  name: `Edicion de: ${user.last_name}`,
+  id: user.id,
+  link: '/editUserRecloser',
+  component: <EditUserRecloser data={user} />
+}
+```
+
+### Tab Behavior
+
+- Clicking Edit opens a new tab
+- If tab already exists for that user, it switches to existing tab
+- Saving closes the tab and returns to user list
+- Multiple user edit tabs can be open simultaneously
+
+## API Integration
+
+<Note>
+  The current implementation shows a success message but doesn't make actual API calls (see `src/modules/configSecurity/components/EditUserRecloser/EditUserRecloser.jsx:31`).
+  
+  In production, you would implement:
+  ```javascript
+  await request('/api/users/update', 'PUT', {
+    id: user.id,
+    password: newPassword
+  });
+  ```
+</Note>
+
+## Security Considerations
+
+<Warning>
+  **Critical Security Issues in Current Implementation:**
+  
+  1. **Plain text passwords**: Passwords are stored and displayed without hashing
+  2. **Password visibility**: Toggle reveals passwords in UI
+  3. **No password complexity requirements**: Any password length accepted
+  4. **No audit logging**: User changes are not tracked
+  5. **Client-side only validation**: No server-side security checks
+</Warning>
+
+## Recommended Improvements
+
+<AccordionGroup>
+  <Accordion title="Password Hashing">
+    Implement bcrypt or similar hashing:
+    
+    ```javascript
+    const bcrypt = require('bcrypt');
+    const hashedPassword = await bcrypt.hash(password, 10);
+    ```
+    
+    Store only hashed passwords in database.
+  </Accordion>
+  
+  <Accordion title="Password Complexity">
+    Enforce password requirements:
+    
+    - Minimum 8 characters
+    - At least one uppercase letter
+    - At least one number
+    - At least one special character
+    
+    ```javascript
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    ```
+  </Accordion>
+  
+  <Accordion title="Remove Password Display">
+    Never show actual passwords:
+    
+    - Remove visibility toggle
+    - Show only "********" in table
+    - Provide "Reset Password" instead of "Edit Password"
+  </Accordion>
+  
+  <Accordion title="Audit Logging">
+    Track all user management actions:
+    
+    ```typescript
+    interface AuditLog {
+      timestamp: Date;
+      admin_user: string;
+      action: 'password_change' | 'status_change';
+      target_user: string;
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Permission Matrix
+
+| Action | Super Admin | Moderador | Operador | Lector |
+|--------|------------|-----------|----------|--------|
+| View users | ✓ | ✓ | ✗ | ✗ |
+| Edit users | ✓ | ✓ | ✗ | ✗ |
+| Create users | ✓ | ✗ | ✗ | ✗ |
+| Delete users | ✓ | ✗ | ✗ | ✗ |
+| View dashboards | ✓ | ✓ | ✓ | ✓ |
+| Edit dashboards | ✓ | ✓ | ✓ | ✗ |
+| Configure alarms | ✓ | ✓ | ✗ | ✗ |
+| Configure PLCs | ✓ | ✗ | ✗ | ✗ |
+
+<Note>
+  The exact permission matrix depends on implementation. The table above shows typical role-based access patterns.
+</Note>
+
+## Best Practices
+
+<Card title="User Account Management" icon="users">
+  - Review user accounts regularly
+  - Disable accounts for inactive users
+  - Use principle of least privilege (assign minimum required profile)
+  - Audit password changes
+  - Implement password rotation policy
+</Card>
+
+<Card title="Profile Assignment" icon="user-tag">
+  - **Lector**: For stakeholders needing read-only access
+  - **Operador**: For operators managing day-to-day operations
+  - **Moderador**: For team leads and senior operators
+  - **Super Admin**: For IT administrators only
+</Card>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Cannot See Super Admin Users">
+    This is by design. Super Admin users (id_profile = 1) are filtered from the display for security.
+  </Accordion>
+  
+  <Accordion title="Edit Tab Won't Close">
+    Use the tab close button or save the form. The tab should auto-close on successful save.
+  </Accordion>
+  
+  <Accordion title="Changes Not Persisting">
+    Currently, changes may not persist to backend. Check if API integration is implemented in your environment.
+  </Accordion>
+</AccordionGroup>
+
+## Future Enhancements
+
+<Steps>
+  <Step title="User Creation Form">
+    Add ability to create new users with:
+    - Email validation
+    - Profile selection
+    - Initial password generation
+  </Step>
+  
+  <Step title="User Deletion">
+    Implement soft delete:
+    - Set status to deleted
+    - Maintain audit trail
+    - Prevent login
+  </Step>
+  
+  <Step title="Two-Factor Authentication">
+    Add 2FA for enhanced security:
+    - TOTP (Google Authenticator)
+    - SMS codes
+    - Email verification
+  </Step>
+  
+  <Step title="Session Management">
+    Implement:
+    - Session timeouts
+    - Concurrent login limits
+    - Force logout capability
+  </Step>
+</Steps>
+
+## See Also
+
+- [Variables](/configuration/variables) - Role-based access to variable configuration
+- [Alarms](/configuration/alarms) - Permission-based alarm management

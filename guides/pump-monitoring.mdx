@@ -1,0 +1,356 @@
+---
+title: Pump Monitoring
+description: Monitor and control pump operations with real-time status and control
+icon: "gauge"
+---
+
+Mas Agua provides comprehensive pump monitoring and control capabilities through the PumpsTable module. This guide covers monitoring pump status and executing control operations.
+
+## Overview
+
+The pump monitoring system provides:
+- Real-time pump status display (running/stopped)
+- Current operation mode tracking (Auto/Manual)
+- Control actions (AUTO, ON, OFF)
+- Suction system information display
+- Automatic status refresh every 30 seconds
+
+## Accessing Pump Monitoring
+
+<Steps>
+  <Step title="Navigate to Pumps Table">
+    Go to `/list/pumps` to access the pump monitoring interface.
+  </Step>
+
+  <Step title="Review System Overview">
+    The interface displays:
+    - **Header**: "Bombeo de succión" (Suction Pumping)
+    - **Info Cards**: System-level status indicators
+    - **Pump Table**: Detailed status for each pump
+  </Step>
+</Steps>
+
+## Understanding the Interface
+
+### Information Cards
+
+The top section (src/modules/PumpsTable/views/index.jsx:255-281) displays system-level information:
+
+<Steps>
+  <Step title="Estado (Status)">
+    Shows overall system status. Color-coded green for normal operation.
+  </Step>
+
+  <Step title="Destino (Destination)">
+    Indicates current pumping destination. Color-coded blue.
+  </Step>
+
+  <Step title="Configuración (Configuration)">
+    Displays active system configuration. Color-coded indigo.
+  </Step>
+
+  <Step title="Activaciones manuales (Manual Activations)">
+    Shows count of manual activations. Color-coded orange.
+  </Step>
+
+  <Step title="Fuera de servicio (Out of Service)">
+    Indicates pumps currently out of service. Color-coded red.
+  </Step>
+</Steps>
+
+### Pump Status Table
+
+Each pump row displays:
+
+**Bomba (Pump Name)**
+- Displays the pump identifier
+
+**Estado (Status)**
+- **En Marcha** (Running): Green chip - pump is operating
+- **Apagada** (Stopped): Gray chip - pump is off
+- **Sin datos** (No Data): Orange chip - no status available
+
+**Modo Actual (Current Mode)**
+- **Automático**: Orange chip - pump in automatic control mode
+- **Encendido forzado**: Green chip - forced on mode
+- **Apagado forzado**: Red chip - forced off mode
+- **Sin datos**: Blue chip - mode unknown
+
+**Acciones (Actions)**
+- Control buttons: AUTO, ON, OFF
+
+## Monitoring Pump Status
+
+<Steps>
+  <Step title="View Real-Time Status">
+    The table displays current status for all configured pumps. Status updates automatically every 30 seconds.
+  </Step>
+
+  <Step title="Interpret Status Colors">
+    - **Green (Success)**: Pump running normally
+    - **Gray (Default)**: Pump stopped
+    - **Orange (Warning)**: No data or automatic mode
+    - **Red (Error)**: Forced off or out of service
+  </Step>
+
+  <Step title="Check System Information">
+    Review the info cards for overall system health and configuration.
+  </Step>
+</Steps>
+
+<Tip>
+  The status refresh interval is 30 seconds. For immediate updates after control actions, the system refreshes automatically.
+</Tip>
+
+## Controlling Pumps
+
+### Understanding Control Modes
+
+**Automatic Mode**
+- Pump control is managed by the PLC automation
+- System decides when to start/stop based on process conditions
+- Manual override requires changing to forced mode first
+
+**Forced ON Mode**
+- Pump is forced to run regardless of automation
+- Override active until changed back to automatic
+- Use for maintenance or testing
+
+**Forced OFF Mode**
+- Pump is forced to stop regardless of automation
+- Override active until changed back to automatic
+- Use for maintenance or equipment protection
+
+### Switching to Automatic Mode
+
+<Steps>
+  <Step title="Identify Forced Pump">
+    Look for pumps showing "Encendido forzado" or "Apagado forzado" status.
+  </Step>
+
+  <Step title="Click AUTO Button">
+    Click the **AUTO** button in the Actions column.
+    
+    <Note>
+      The AUTO button is disabled when:
+      - Pump is already in automatic mode
+      - No status data is available
+    </Note>
+  </Step>
+
+  <Step title="Confirm Action">
+    A confirmation dialog appears: "¿Desea cambiar el modo actual de la bomba?"
+    
+    Click **"Sí, enviar"** to proceed or **"Cancelar"** to abort.
+  </Step>
+
+  <Step title="Verify Mode Change">
+    The system sends the command to the PLC and displays: "Acción enviada - En breve verás el cambio reflejado"
+    
+    Status updates automatically within 30 seconds.
+  </Step>
+</Steps>
+
+### Forcing Pump ON
+
+<Steps>
+  <Step title="Verify Automatic Mode">
+    Ensure the pump is currently in "Automático" mode. The ON button is only enabled in automatic mode.
+  </Step>
+
+  <Step title="Click ON Button">
+    Click the green **ON** button in the Actions column.
+  </Step>
+
+  <Step title="Confirm Override">
+    Confirm the mode change in the dialog that appears.
+    
+    <Warning>
+      Forcing a pump ON overrides automatic control. Ensure this is safe and appropriate for current process conditions.
+    </Warning>
+  </Step>
+
+  <Step title="Monitor Status Change">
+    - The system sends the command to the PLC
+    - Status updates automatically
+    - Verify pump shows "Encendido forzado" mode
+    - Check that pump status changes to "En Marcha"
+  </Step>
+</Steps>
+
+### Forcing Pump OFF
+
+<Steps>
+  <Step title="Verify Automatic Mode">
+    Ensure the pump is currently in "Automático" mode. The OFF button is only enabled in automatic mode.
+  </Step>
+
+  <Step title="Click OFF Button">
+    Click the red **OFF** button in the Actions column.
+  </Step>
+
+  <Step title="Confirm Override">
+    Confirm the mode change in the dialog.
+    
+    <Warning>
+      Forcing a pump OFF may impact process operations. Verify that stopping this pump is safe and won't cause system issues.
+    </Warning>
+  </Step>
+
+  <Step title="Monitor Status Change">
+    - The system sends the command to the PLC
+    - Status updates automatically
+    - Verify pump shows "Apagado forzado" mode
+    - Check that pump status changes to "Apagada"
+  </Step>
+</Steps>
+
+## Control Action Flow
+
+The control system (src/modules/PumpsTable/views/index.jsx:192-229) follows this sequence:
+
+```javascript
+1. User clicks control button (AUTO/ON/OFF)
+2. System displays confirmation dialog
+3. User confirms action
+4. System sends POST request to /bombs_PLC/execute with:
+   {
+     bombId: pump_id,
+     actionId: action_id
+   }
+5. Backend communicates with PLC
+6. System displays success message
+7. Status refresh triggered automatically
+8. Table updates with new mode and status
+```
+
+## Automatic Status Updates
+
+The pump monitoring system maintains current status through:
+
+<Steps>
+  <Step title="Initial Load">
+    On page load, the system fetches:
+    - All configured pumps with available actions
+    - Current status for each pump
+    - System-level information
+  </Step>
+
+  <Step title="Periodic Refresh">
+    Every 30 seconds, the system calls `/data_bombeo` endpoint to refresh:
+    - Pump status (running/stopped)
+    - Current operation modes
+    - System information cards
+  </Step>
+
+  <Step title="Post-Action Refresh">
+    After any control action, the system immediately refreshes status to show the result.
+  </Step>
+</Steps>
+
+<Note>
+  The 30-second refresh interval balances real-time monitoring with server load. Critical changes from control actions refresh immediately.
+</Note>
+
+## Best Practices
+
+### Safety
+
+<Warning>
+  Always verify process conditions before forcing pumps ON or OFF. Incorrect actions can damage equipment or disrupt operations.
+</Warning>
+
+- Understand the process implications before overriding automatic control
+- Document why you're forcing a pump into manual mode
+- Return pumps to automatic mode as soon as manual operation is no longer needed
+- Monitor pump status after control actions to ensure expected behavior
+
+### Operations
+
+- Review system info cards before making control changes
+- Check that "Fuera de servicio" count matches expectations
+- Verify destination and configuration are appropriate
+- Allow time for PLC communication (status may take a few seconds to update)
+
+### Maintenance
+
+- Use forced OFF mode when performing pump maintenance
+- Return to automatic mode after maintenance completion
+- Track manual activations through the info card
+- Document any pumps requiring frequent manual intervention
+
+## Troubleshooting
+
+**Button disabled when it shouldn't be**
+- Check pump mode - buttons are contextual
+  - AUTO: Only enabled when pump is in forced mode
+  - ON/OFF: Only enabled when pump is in automatic mode
+- Verify pump has status data (not "Sin datos")
+
+**"Acción no disponible" message**
+- The selected action is not configured for this pump
+- Check pump configuration in PLC
+- Verify action mappings in database
+
+**Status not updating after control action**
+- Wait for 30-second refresh cycle
+- Check PLC communication status
+- Verify backend API connectivity
+- Check browser console for errors
+
+**"No se pudo enviar la acción" error**
+- Verify PLC communication is working
+- Check network connectivity to backend
+- Ensure PLC is online and accepting commands
+- Check user permissions for pump control
+
+**"Sin datos" status persists**
+- Verify PLC is communicating with backend
+- Check that pump is configured in PLC
+- Ensure variable mappings are correct
+- Verify backend is polling PLC data
+
+## System Information Interpretation
+
+### Estado (Status)
+Indicates overall system health:
+- Normal operation shows expected status message
+- Abnormal conditions trigger alert status
+
+### Configuración (Configuration)
+Displays active pumping configuration:
+- Single pump mode
+- Dual pump alternating
+- Triplex operation
+- Custom configurations
+
+### Activaciones Manuales (Manual Activations)
+Tracks how often operators override automatic control:
+- High numbers may indicate automation issues
+- Low numbers suggest system is functioning as designed
+- Use as a metric for system reliability
+
+### Fuera de Servicio (Out of Service)
+Shows pumps currently unavailable:
+- Should match known maintenance activities
+- Unexpected values indicate equipment problems
+- Zero is ideal for full redundancy
+
+## Integration with Other Features
+
+Pump monitoring integrates with:
+
+**Alarms**
+- Pump failures can trigger alarms
+- Status changes can be logged
+- Configure alerts for unexpected mode changes
+
+**Charts**
+- Create pump status charts for dashboards
+- Monitor historical pump runtime
+- Track start/stop cycles
+
+**Variables**
+- Pump status variables can be used in diagrams
+- Display pump state on geographic maps
+- Create calculated variables from pump data

@@ -1,0 +1,278 @@
+---
+title: Variables Configuration
+description: Configure InfluxDB metrics that feed into dashboards and alarms
+---
+
+## Overview
+
+Variables are InfluxDB metrics that serve as the foundation for dashboards and alarm systems in Mas Agua. Each variable can be:
+
+- **Simple**: Direct data from a single InfluxDB topic/field
+- **Calculated**: Derived from mathematical formulas combining multiple variables
+- **Binary Compressed**: Multiple boolean states packed into a single byte
+
+## Accessing Variables
+
+Navigate to **Configuration > Variables** to manage your InfluxDB variables.
+
+## Variable Types
+
+### Instantaneous Variables
+
+Capture the latest value from InfluxDB:
+
+```json
+{
+  "type": "last",
+  "name": "Tank Level",
+  "topic": "sensors/water_tank",
+  "field": "level",
+  "unit": "m"
+}
+```
+
+### Historical Variables
+
+Store historical data over time:
+
+```json
+{
+  "type": "history",
+  "name": "Daily Flow Rate",
+  "topic": "sensors/flow",
+  "field": "rate",
+  "unit": "m³/h"
+}
+```
+
+## Creating a Variable
+
+<Steps>
+  <Step title="Open Variable Modal">
+    Click **Crear Variable** to open the configuration form.
+  </Step>
+  
+  <Step title="Configure Basic Properties">
+    <ParamField path="name_var" type="string" required>
+      Variable name (e.g., "Pump 1 Pressure")
+    </ParamField>
+    
+    <ParamField path="process" type="string" required>
+      Process category for filtering (e.g., "Water Treatment", "Distribution")
+    </ParamField>
+    
+    <ParamField path="unit" type="string" required>
+      Unit of measurement (e.g., "bar", "°C", "m³/h")
+    </ParamField>
+    
+    <ParamField path="type_var" type="select" required>
+      Variable type:
+      - `last` - Instantaneous (latest value)
+      - `history` - Historical (time series data)
+    </ParamField>
+  </Step>
+  
+  <Step title="Configure Data Source">
+    For **simple variables**:
+    
+    <ParamField path="topic" type="string" required>
+      InfluxDB topic (measurement name)
+    </ParamField>
+    
+    <ParamField path="field" type="string" required>
+      Field name within the topic
+    </ParamField>
+    
+    <ParamField path="time" type="number" required>
+      Query time window (e.g., 5, 60, 3600)
+    </ParamField>
+    
+    <ParamField path="unit_topic" type="select" required>
+      Time unit:
+      - `ms` - Milliseconds
+      - `s` - Seconds
+      - `m` - Minutes
+      - `h` - Hours
+      - `d` - Days
+      - `mo` - Months
+      - `y` - Years
+    </ParamField>
+    
+    <ParamField path="period" type="number" required>
+      Sampling period value
+    </ParamField>
+    
+    <ParamField path="unit_period" type="select" required>
+      Period time unit (same options as `unit_topic`)
+    </ParamField>
+    
+    <ParamField path="type_period" type="select" required>
+      Aggregation method:
+      - `last` - Latest value
+      - `mean` - Average value
+    </ParamField>
+  </Step>
+</Steps>
+
+## Calculated Variables
+
+Calculated variables combine multiple data sources using mathematical formulas.
+
+### Enabling Calculation Mode
+
+1. Toggle **"¿La variable requiere un calculo?"** switch
+2. The form switches to formula builder mode
+3. Define variables used in the formula
+4. Build the mathematical expression
+
+### Formula Builder
+
+The calculator interface supports:
+
+- **Operators**: `+`, `-`, `*`, `/`, `(`, `)`
+- **Variables**: Reference other configured variables
+- **Numbers**: Constants in your formula
+
+### Example: Power Calculation
+
+```json
+{
+  "name": "Pump Power",
+  "calc": true,
+  "equation": ["voltage", "*", "current"],
+  "varsInflux": {
+    "voltage": {
+      "calc_topic": "sensors/electrical",
+      "calc_field": "voltage",
+      "calc_time": 1,
+      "calc_unit_topic": "s",
+      "calc_period": 1,
+      "calc_unit_period": "s",
+      "calc_type_period": "last"
+    },
+    "current": {
+      "calc_topic": "sensors/electrical",
+      "calc_field": "current",
+      "calc_time": 1,
+      "calc_unit_topic": "s",
+      "calc_period": 1,
+      "calc_unit_period": "s",
+      "calc_type_period": "last"
+    }
+  },
+  "unit": "kW"
+}
+```
+
+## Binary Compressed Variables
+
+Pack up to 8 boolean states into a single byte value.
+
+### Configuration
+
+1. Toggle **"¿Variable binaria comprimida?"** switch
+2. Click **Agregar bit** to add bit assignments (max 8)
+3. For each bit:
+   - **Nombre**: Descriptive name (e.g., "Pump Running")
+   - **Posición**: Bit position (0-7)
+
+### Example: Equipment Status
+
+```json
+{
+  "name": "Equipment Status Byte",
+  "binary_compressed": true,
+  "bits": [
+    {"id": 1, "name": "Pump 1 Running", "bit": 0},
+    {"id": 2, "name": "Pump 2 Running", "bit": 1},
+    {"id": 3, "name": "Valve Open", "bit": 2},
+    {"id": 4, "name": "High Pressure Alarm", "bit": 3}
+  ]
+}
+```
+
+<Note>
+  Binary compressed variables cannot use calculation mode simultaneously.
+</Note>
+
+## Filtering Variables
+
+Use the filter panel to find variables:
+
+<ParamField path="unit" type="select">
+  Filter by unit of measurement
+</ParamField>
+
+<ParamField path="calc" type="select">
+  Filter by calculation status:
+  - All variables
+  - Only calculated (`true`)
+  - Only direct (`false`)
+</ParamField>
+
+<ParamField path="process" type="select">
+  Filter by process category
+</ParamField>
+
+## Managing Variables
+
+### Edit Variable
+
+1. Click **Editar** in the table row
+2. Modify configuration
+3. Click **Guardar variable**
+
+### Delete Variable
+
+1. Click **Eliminar** in the table row
+2. Confirm deletion in the dialog
+
+<Warning>
+  Deleting a variable used in alarms or dashboards will break those configurations.
+</Warning>
+
+## API Endpoints
+
+Variables are managed through these backend routes:
+
+| Endpoint | Method | Purpose |
+|----------|--------|----------|
+| `/saveVariable` | POST | Create or update variable |
+| `/deleteVar/:id` | POST | Delete variable by ID |
+| `/getVarsInflux` | GET | Retrieve all variables |
+
+## Data Structure
+
+The complete variable schema:
+
+```typescript
+interface Variable {
+  id: number;
+  name: string;
+  unit: string;
+  type: 'last' | 'history';
+  calc: boolean;
+  process: string;
+  binary_compressed?: boolean;
+  bits?: Array<{id: number, name: string, bit: number}>;
+  varsInflux: {
+    [varName: string]: {
+      calc_topic: string;
+      calc_field: string;
+      calc_time: number;
+      calc_unit?: string;          // For simple vars
+      calc_unit_topic?: string;    // For calc vars
+      calc_period: number;
+      calc_unit_period: string;
+      calc_type_period: 'last' | 'mean';
+    }
+  };
+  equation?: string[];  // For calculated variables
+}
+```
+
+## See Also
+
+- [Alarms](/configuration/alarms) - Use variables to trigger alerts
+- [PLC Profiles](/configuration/plc-profiles) - Connect variables to PLC data sources
+- [Dashboards](/dashboards/overview) - Visualize variable data

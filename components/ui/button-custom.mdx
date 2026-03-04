@@ -1,0 +1,119 @@
+---
+title: ButtonCustom
+description: A customizable button component with Tailwind CSS styling
+---
+
+## Overview
+
+ButtonCustom is a reusable button component that provides a consistent styled button with customizable properties. It uses Tailwind CSS for styling and supports custom classes, disabled states, and click handlers.
+
+## Import
+
+```jsx
+import ButtonCustom from '@/components/ButtonCustom';
+```
+
+## Props
+
+<ParamField path="type" type="string">
+  HTML button type attribute (e.g., "button", "submit", "reset")
+</ParamField>
+
+<ParamField path="children" type="ReactNode">
+  Content to render inside the button. Falls back to `props.text` if provided
+</ParamField>
+
+<ParamField path="onclick" type="function">
+  Click handler function to execute when button is clicked
+</ParamField>
+
+<ParamField path="props" type="object">
+  Additional properties object containing:
+  - `disabled` (boolean): Disables the button
+  - `text` (string): Button text content (overrides children if provided)
+  - `class` (string): Additional CSS classes to apply to the button
+</ParamField>
+
+## Default Styling
+
+The component applies the following Tailwind classes by default:
+- `py-2.5` - Vertical padding
+- `px-4` - Horizontal padding
+- `font-semibold` - Semi-bold font weight
+- `AeromaticsRegular` - Custom font family
+- `rounded-xl` - Extra large border radius
+- `shadow-md` - Medium shadow
+
+## Usage Examples
+
+### Basic Button
+
+```jsx
+<ButtonCustom 
+  type="button" 
+  onclick={() => console.log('Clicked')}
+>
+  Click Me
+</ButtonCustom>
+```
+
+### Button with Custom Text Prop
+
+```jsx
+<ButtonCustom 
+  type="submit" 
+  onclick={handleSubmit}
+  props={{ text: 'Submit Form' }}
+/>
+```
+
+### Disabled Button
+
+```jsx
+<ButtonCustom 
+  type="button" 
+  onclick={handleClick}
+  props={{ 
+    disabled: true,
+    text: 'Disabled Button' 
+  }}
+/>
+```
+
+### Button with Custom Classes
+
+```jsx
+<ButtonCustom 
+  type="button" 
+  onclick={handleSave}
+  props={{ 
+    class: 'bg-blue-500 text-white hover:bg-blue-600',
+    text: 'Save Changes' 
+  }}
+/>
+```
+
+### Form Submit Button
+
+```jsx
+<form onSubmit={handleFormSubmit}>
+  <ButtonCustom 
+    type="submit" 
+    props={{ 
+      class: 'bg-green-500 text-white w-full',
+      text: 'Create Account' 
+    }}
+  />
+</form>
+```
+
+## Source Location
+
+`/src/components/ButtonCustom/index.jsx`
+
+## Notes
+
+- The component uses optional chaining (`?.`) to safely access nested properties
+- Custom classes can be added via `props.class` to extend or override default styling
+- The button content prioritizes `props.text` over `children` if both are provided
+- Uses the AeromaticsRegular custom font - ensure this font is loaded in your project

@@ -1,97 +1,200 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Mas Agua Documentation"
+description: "Complete water management SCADA platform for real-time monitoring and control"
+mode: "custom"
 ---
 
-## Setting up
+<div className="relative overflow-hidden bg-gradient-to-br from-[#0f1117] via-[#1a2332] to-[#0f1117] dark:from-[#0f1117] dark:via-[#1a2332] dark:to-[#0f1117] py-20">
+  <div className="max-w-7xl mx-auto px-6 lg:px-8">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      <div className="lg:col-span-7">
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
+          Water Infrastructure<br />
+          <span className="text-[#218ecc]">Monitoring & Control</span>
+        </h1>
+        <p className="text-lg sm:text-xl text-gray-300 dark:text-gray-300 max-w-2xl mb-8">
+          Real-time SCADA platform for monitoring water systems, visualizing data with interactive dashboards, and managing critical infrastructure with precision.
+        </p>
+        <div className="flex flex-wrap gap-4">
+          <a 
+            href="/quickstart" 
+            className="inline-flex items-center px-6 py-3 rounded-lg bg-[#218ecc] hover:bg-[#1a75a8] text-white font-semibold transition-colors no-underline"
+          >
+            Get Started
+            <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </a>
+          <a 
+            href="/features/dashboard" 
+            className="inline-flex items-center px-6 py-3 rounded-lg border border-gray-400/30 bg-white/10 hover:bg-white/20 text-white font-semibold transition-colors no-underline"
+          >
+            Explore Features
+          </a>
+        </div>
+      </div>
+      <div className="lg:col-span-5 hidden lg:flex justify-center">
+        <div className="relative w-full max-w-md">
+          <div className="absolute inset-0 bg-[#218ecc]/20 blur-3xl rounded-full"></div>
+          <svg className="relative w-full h-auto" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="200" cy="200" r="180" stroke="#218ecc" strokeWidth="2" opacity="0.3"/>
+            <circle cx="200" cy="200" r="140" stroke="#218ecc" strokeWidth="2" opacity="0.5"/>
+            <circle cx="200" cy="200" r="100" stroke="#218ecc" strokeWidth="3" opacity="0.7"/>
+            <circle cx="200" cy="200" r="15" fill="#218ecc"/>
+            <circle cx="280" cy="150" r="12" fill="#ebf7f8"/>
+            <circle cx="120" cy="180" r="10" fill="#ebf7f8"/>
+            <circle cx="250" cy="270" r="11" fill="#ebf7f8"/>
+            <circle cx="140" cy="280" r="9" fill="#ebf7f8"/>
+            <line x1="200" y1="200" x2="280" y2="150" stroke="#218ecc" strokeWidth="2" opacity="0.6"/>
+            <line x1="200" y1="200" x2="120" y2="180" stroke="#218ecc" strokeWidth="2" opacity="0.6"/>
+            <line x1="200" y1="200" x2="250" y2="270" stroke="#218ecc" strokeWidth="2" opacity="0.6"/>
+            <line x1="200" y1="200" x2="140" y2="280" stroke="#218ecc" strokeWidth="2" opacity="0.6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-Get your documentation site up and running in minutes.
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white mb-3">Quick start</h2>
+  <p className="text-base text-gray-600 dark:text-gray-400 mb-8">Get up and running with Mas Agua in minutes</p>
+  
+  <Steps>
+    <Step title="Access the platform">
+      Log in to your Mas Agua instance using your credentials. For desktop users, download and install the Tauri-based application for native performance.
+      
+      ```bash
+      # Download the latest desktop release
+      https://github.com/CspmIT/mas-agua-front/releases
+      ```
+    </Step>
+    
+    <Step title="Configure your data sources">
+      Connect your PLC devices and configure InfluxDB variables to start receiving real-time data from your water infrastructure.
+      
+      Navigate to **Configuration > Variables** to set up your data sources and define measurement parameters.
+    </Step>
+    
+    <Step title="Create your first dashboard">
+      Build a custom dashboard with live monitoring widgets. Choose from gauge charts, liquid fill indicators, boolean status displays, and interactive maps.
+      
+      <Note>
+        Dashboards automatically refresh every 30 seconds to display the latest data from your sensors and devices.
+      </Note>
+    </Step>
+    
+    <Step title="Set up alarms">
+      Configure alarm thresholds to receive notifications when critical parameters exceed safe operating ranges.
+      
+      Go to **Configuration > Alarms** to define your monitoring rules and notification preferences.
+    </Step>
+  </Steps>
+</div>
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white mb-3">Core capabilities</h2>
+  <p className="text-base text-gray-600 dark:text-gray-400 mb-8">Everything you need to monitor and manage water infrastructure</p>
+  
+  <CardGroup cols={2}>
+    <Card title="Real-time dashboards" icon="gauge-high" href="/features/dashboard">
+      Visualize live data from your water systems with customizable dashboard layouts and multiple chart types.
+    </Card>
+    <Card title="Interactive maps" icon="map" href="/features/maps">
+      Monitor geo-located sensors and infrastructure on interactive MapLibre maps with real-time data overlays.
+    </Card>
+    <Card title="Visual diagram editor" icon="diagram-project" href="/features/diagram-editor">
+      Create network diagrams and schemas using the Konva-powered visual editor with drag-and-drop components.
+    </Card>
+    <Card title="Alarm system" icon="bell" href="/configuration/alarms">
+      Configure intelligent alarms with threshold monitoring and multi-channel notification delivery.
+    </Card>
+    <Card title="Pump monitoring" icon="pump" href="/guides/pump-monitoring">
+      Track pump status, performance metrics, and control operations from centralized dashboards.
+    </Card>
+    <Card title="Data export" icon="file-export" href="/features/charts-visualization">
+      Export historical data to CSV or generate PDF reports for analysis and compliance documentation.
+    </Card>
+  </CardGroup>
+</div>
 
-## Make it yours
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white mb-3">Explore by topic</h2>
+  <p className="text-base text-gray-600 dark:text-gray-400 mb-8">Find what you need to build effective monitoring solutions</p>
+  
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <a href="/features/charts-visualization" className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#218ecc] dark:hover:border-[#218ecc] overflow-hidden transition-all no-underline">
+      <div className="h-56 bg-gradient-to-br from-[#218ecc]/20 to-[#ebf7f8]/10 dark:from-[#218ecc]/20 dark:to-[#1a1d27] flex items-center justify-center overflow-hidden">
+        <svg className="w-32 h-32 text-[#218ecc]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      </div>
+      <div className="p-6 bg-white dark:bg-[#1a1d27]">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Chart components</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Explore gauge charts, liquid fill displays, pie charts, and time-series visualizations for your monitoring dashboards.</p>
+        <span className="text-sm font-medium text-[#218ecc] group-hover:text-[#1a75a8] inline-flex items-center">
+          View chart types
+          <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </span>
+      </div>
+    </a>
+    
+    <a href="/configuration/variables" className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#218ecc] dark:hover:border-[#218ecc] overflow-hidden transition-all no-underline">
+      <div className="h-56 bg-gradient-to-br from-[#7c98b0]/20 to-[#ebf7f8]/10 dark:from-[#7c98b0]/20 dark:to-[#1a1d27] flex items-center justify-center overflow-hidden">
+        <svg className="w-32 h-32 text-[#7c98b0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      </div>
+      <div className="p-6 bg-white dark:bg-[#1a1d27]">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Configuration guide</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Set up InfluxDB variables, PLC profiles, alarms, and notification channels to customize your monitoring environment.</p>
+        <span className="text-sm font-medium text-[#218ecc] group-hover:text-[#1a75a8] inline-flex items-center">
+          Configure your system
+          <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </span>
+      </div>
+    </a>
+  </div>
+</div>
 
-Design a docs site that looks great and empowers your users.
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white mb-3">Developer resources</h2>
+  <p className="text-base text-gray-600 dark:text-gray-400 mb-8">Technical documentation and API reference</p>
+  
+  <CardGroup cols={3}>
+    <Card title="API overview" icon="code" href="/api/overview">
+      REST API endpoints for authentication, data retrieval, and configuration management.
+    </Card>
+    <Card title="Desktop app" icon="desktop" href="/desktop/overview">
+      Build and deploy the Tauri-based desktop application for Windows, macOS, and Linux.
+    </Card>
+    <Card title="Component library" icon="cube" href="/components/charts/liquid-fill">
+      Reusable React components for charts, maps, and UI elements built with Material-UI.
+    </Card>
+  </CardGroup>
+</div>
 
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
-  </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
-
-## Create beautiful pages
-
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
-
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<div className="mt-20 mb-16 max-w-5xl mx-auto px-6">
+  <div className="rounded-2xl border border-[#218ecc]/30 bg-gradient-to-br from-[#218ecc]/5 to-transparent dark:from-[#218ecc]/10 dark:to-transparent p-8 sm:p-12 text-center">
+    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4">
+      Ready to start monitoring?
+    </h2>
+    <p className="text-base text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-8">
+      Follow our quickstart guide to set up your first dashboard and start visualizing real-time data from your water infrastructure.
+    </p>
+    <a 
+      href="/quickstart" 
+      className="inline-flex items-center px-6 py-3 rounded-lg bg-[#218ecc] hover:bg-[#1a75a8] text-white font-semibold transition-colors no-underline"
+    >
+      Get Started Now
+      <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+      </svg>
+    </a>
+  </div>
+</div>

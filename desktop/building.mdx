@@ -1,0 +1,409 @@
+---
+title: Building & Distribution
+description: Build, package, and distribute the Mas Agua desktop application
+---
+
+## Build Process Overview
+
+The Mas Agua desktop build process involves two stages:
+
+1. **Frontend Build**: Vite compiles React application to static assets
+2. **Tauri Build**: Bundles frontend with Rust backend into platform-specific installers
+
+## Production Build
+
+### Build Command
+
+```bash
+npm run tauri build
+```
+
+This executes:
+1. `npm run build` - Compiles frontend with Vite
+2. Tauri bundles the application for your current platform
+3. Creates installer packages in `src-tauri/target/release/bundle/`
+
+### Build Configuration
+
+From `tauri.conf.json:5-10`:
+
+```json
+{
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  }
+}
+```
+
+- **beforeBuildCommand**: Runs `npm run build` to create production frontend
+- **frontendDist**: Points to `dist/` directory containing built frontend
+
+## Platform-Specific Builds
+
+### Bundle Targets
+
+Configured in `tauri.conf.json:11-16`:
+
+```json
+{
+  "bundle": {
+    "active": true,
+    "targets": ["msi", "deb", "rpm", "appimage", "dmg"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "createUpdaterArtifacts": true
+  }
+}
+```
+
+### Windows
+
+**Target**: MSI Installer
+
+```bash
+npm run tauri build -- --target x86_64-pc-windows-msvc
+```
+
+**Output**:
+- `src-tauri/target/release/bundle/msi/Mas Agua_1.0.5_x64_en-US.msi`
+- `src-tauri/target/release/bundle/msi/Mas Agua_1.0.5_x64_en-US.msi.zip` (for updates)
+- `src-tauri/target/release/bundle/msi/Mas Agua_1.0.5_x64_en-US.msi.zip.sig` (signature)
+
+**Requirements**:
+- Windows 10/11 (build machine)
+- Visual Studio C++ Build Tools
+- WiX Toolset v3 (auto-installed by Tauri)
+
+<Note>
+  MSI installers provide better Windows integration with proper installation dialogs and Add/Remove Programs entries.
+</Note>
+
+### macOS
+
+**Target**: DMG Disk Image
+
+```bash
+# Intel Mac
+npm run tauri build -- --target x86_64-apple-darwin
+
+# Apple Silicon
+npm run tauri build -- --target aarch64-apple-darwin
+
+# Universal Binary (both architectures)
+npm run tauri build -- --target universal-apple-darwin
+```
+
+**Output**:
+- `src-tauri/target/release/bundle/dmg/Mas Agua_1.0.5_x64.dmg`
+- `src-tauri/target/release/bundle/dmg/Mas Agua_1.0.5_aarch64.dmg`
+- Update artifacts (`.tar.gz` and `.tar.gz.sig`)
+
+**Requirements**:
+- macOS 10.15+ (build machine)
+- Xcode Command Line Tools
+
+**Code Signing** (Optional but recommended):
+
+```bash
+# Set environment variables
+export APPLE_CERTIFICATE="path/to/certificate.p12"
+export APPLE_CERTIFICATE_PASSWORD="cert-password"
+export APPLE_SIGNING_IDENTITY="Developer ID Application: Your Name"
+export APPLE_ID="your-apple-id@email.com"
+export APPLE_PASSWORD="app-specific-password"
+
+npm run tauri build
+```
+
+### Linux
+
+**Targets**: DEB, RPM, AppImage
+
+```bash
+# Build all Linux formats
+npm run tauri build
+
+# Build specific format
+npm run tauri build -- --bundles deb
+npm run tauri build -- --bundles rpm
+npm run tauri build -- --bundles appimage
+```
+
+**Output**:
+- `src-tauri/target/release/bundle/deb/mas-agua_1.0.5_amd64.deb`
+- `src-tauri/target/release/bundle/rpm/mas-agua-1.0.5-1.x86_64.rpm`
+- `src-tauri/target/release/bundle/appimage/mas-agua_1.0.5_amd64.AppImage`
+- Update artifacts for each format
+
+**Requirements**:
+- Linux distribution (Ubuntu, Fedora, Arch, etc.)
+- System dependencies from [Installation](/desktop/installation#linux)
+
+<Tabs>
+  <Tab title="Debian/Ubuntu">
+    ```bash
+    # Install the DEB package
+    sudo dpkg -i mas-agua_1.0.5_amd64.deb
+    
+    # Fix dependencies if needed
+    sudo apt-get install -f
+    ```
+  </Tab>
+  <Tab title="Fedora/RHEL">
+    ```bash
+    # Install the RPM package
+    sudo rpm -i mas-agua-1.0.5-1.x86_64.rpm
+    
+    # Or with dnf
+    sudo dnf install mas-agua-1.0.5-1.x86_64.rpm
+    ```
+  </Tab>
+  <Tab title="AppImage">
+    ```bash
+    # Make executable
+    chmod +x mas-agua_1.0.5_amd64.AppImage
+    
+    # Run directly
+    ./mas-agua_1.0.5_amd64.AppImage
+    ```
+  </Tab>
+</Tabs>
+
+## Cross-Platform Builds
+
+### Build Matrix
+
+| Build OS | Can Build For |
+|----------|---------------|
+| Windows | Windows only |
+| macOS | macOS only |
+| Linux | Linux only |
+
+<Warning>
+  Tauri does not support cross-compilation. You must build on the target platform or use CI/CD with multiple runners.
+</Warning>
+
+### GitHub Actions CI/CD
+
+Example workflow for building on all platforms:
+
+```yaml
+name: Build Desktop App
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev \
+            build-essential curl wget file libxdo-dev libssl-dev \
+            libayatana-appindicator3-dev librsvg2-dev
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Build Tauri app
+        run: npm run tauri build
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os }}
+          path: src-tauri/target/release/bundle/
+```
+
+## Build Optimization
+
+### Binary Size Optimization
+
+Add to `src-tauri/Cargo.toml`:
+
+```toml
+[profile.release]
+opt-level = "z"     # Optimize for size
+lto = true          # Link-time optimization
+codegen-units = 1   # Better optimization
+strip = true        # Remove debug symbols
+panic = "abort"     # Smaller binary
+```
+
+<Warning>
+  These optimizations increase build time significantly but reduce binary size by 30-50%.
+</Warning>
+
+### Cargo Cache
+
+Speed up builds by caching Cargo dependencies:
+
+```bash
+# GitHub Actions
+- uses: Swatinem/rust-cache@v2
+  with:
+    workspaces: src-tauri -> target
+```
+
+## Code Signing
+
+### Windows Code Signing
+
+```bash
+# Set environment variables
+export TAURI_SIGNING_PRIVATE_KEY="path/to/private-key.pfx"
+export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="password"
+
+npm run tauri build
+```
+
+### macOS Code Signing
+
+See [Platform-Specific Builds > macOS](#macos) above.
+
+### Linux AppImage Signing
+
+```bash
+# Sign with GPG
+gpg --detach-sign --armor mas-agua_1.0.5_amd64.AppImage
+```
+
+## Update Artifacts
+
+### Automatic Generation
+
+From `tauri.conf.json:15`:
+
+```json
+"createUpdaterArtifacts": true
+```
+
+This creates:
+- Compressed update bundles (`.tar.gz`, `.zip`)
+- Signature files (`.sig`) for verification
+- Update manifest (`latest.json`)
+
+See [Auto-Updates](/desktop/updates) for configuration details.
+
+## Build Artifacts Location
+
+After building, find artifacts in:
+
+```
+src-tauri/target/release/
+├── masagua-desktop              # Binary executable
+├── bundle/
+│   ├── msi/                     # Windows installer
+│   ├── dmg/                     # macOS disk image
+│   ├── deb/                     # Debian package
+│   ├── rpm/                     # Red Hat package
+│   └── appimage/                # Linux AppImage
+```
+
+## Distribution
+
+### GitHub Releases
+
+1. Create a new release tag:
+```bash
+git tag -a v1.0.5 -m "Release v1.0.5"
+git push origin v1.0.5
+```
+
+2. Upload build artifacts to GitHub Releases
+
+3. Upload `latest.json` for auto-updates:
+```json
+{
+  "version": "1.0.5",
+  "notes": "Release notes here",
+  "pub_date": "2026-03-04T00:00:00Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "...",
+      "url": "https://github.com/CspmIT/mas-agua-front/releases/download/v1.0.5/..."
+    }
+  }
+}
+```
+
+### Direct Distribution
+
+Share installer files directly:
+- **Windows**: `.msi` file
+- **macOS**: `.dmg` file  
+- **Linux**: `.deb`, `.rpm`, or `.AppImage` file
+
+## Troubleshooting
+
+### Build Fails with "Out of Memory"
+
+```bash
+# Increase Node.js memory limit
+export NODE_OPTIONS="--max-old-space-size=4096"
+npm run tauri build
+```
+
+### Rust Compilation Errors
+
+```bash
+# Update Rust toolchain
+rustup update stable
+
+# Clean and rebuild
+cd src-tauri
+cargo clean
+cd ..
+npm run tauri build
+```
+
+### Icon Not Displaying
+
+Verify icon files exist in `src-tauri/icons/`:
+- `32x32.png`, `128x128.png`, `128x128@2x.png`
+- `icon.icns` (macOS)
+- `icon.ico` (Windows)
+
+Regenerate icons:
+```bash
+npm run tauri icon path/to/source-icon.png
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Auto-Updates" icon="arrow-rotate-right" href="/desktop/updates">
+    Configure automatic update system
+  </Card>
+  <Card title="Desktop Overview" icon="desktop" href="/desktop/overview">
+    Learn about desktop architecture
+  </Card>
+</CardGroup>

@@ -1,0 +1,220 @@
+---
+title: 'LiquidFillPorcentaje'
+description: 'Animated liquid fill gauge component for displaying percentage or value progress'
+icon: 'droplet'
+---
+
+The `LiquidFillPorcentaje` component renders an animated liquid fill gauge using Apache ECharts. It supports multiple shapes and can display either percentage values or absolute values with custom units.
+
+## Basic Usage
+
+```jsx
+import LiquidFillPorcentaje from '@/modules/Charts/components/LiquidFillPorcentaje'
+
+<LiquidFillPorcentaje
+  value={75}
+  maxValue={100}
+  color="#38bdf8"
+  shape="circle"
+  porcentage={true}
+/>
+```
+
+## Props
+
+<ParamField path="value" type="number" default="0">
+  The current value to display. Can be any numeric value.
+</ParamField>
+
+<ParamField path="maxValue" type="number" default="1">
+  The maximum value for calculating the fill percentage. The fill level is calculated as `value / maxValue`.
+</ParamField>
+
+<ParamField path="color" type="string" default="#38bdf8">
+  The primary color for the liquid fill gradient. Accepts hex color codes.
+</ParamField>
+
+<ParamField path="shape" type="string" default="circle">
+  The shape of the liquid fill gauge. Available options:
+  - `circle` - Circular gauge with 90% radius
+  - `rect` - Rectangular gauge
+  - `roundRect` - Rounded rectangle
+  - `triangle` - Triangular gauge
+  - `diamond` - Diamond-shaped gauge
+  - `arrow` - Arrow-shaped gauge
+  - `pin` - Pin/location marker shape
+</ParamField>
+
+<ParamField path="porcentage" type="boolean" default="false">
+  When `true`, displays the value as a percentage (0-100%). When `false`, displays the raw value with optional unit.
+</ParamField>
+
+<ParamField path="border" type="boolean" default="true">
+  Whether to show the gradient border outline around the gauge.
+</ParamField>
+
+<ParamField path="unidad" type="string" default="">
+  Unit label to display after the value (e.g., "L", "m³", "°C"). Only shown when `porcentage` is `false`.
+</ParamField>
+
+<ParamField path="other" type="string" default="false">
+  Additional text to display below the main value.
+</ParamField>
+
+<ParamField path="multipleValues" type="object" default="null">
+  Advanced mode for displaying multiple variables. See [Multiple Values Mode](#multiple-values-mode) below.
+</ParamField>
+
+## Examples
+
+### Percentage Display
+
+```jsx
+<LiquidFillPorcentaje
+  value={0.65}
+  maxValue={1}
+  color="#10b981"
+  shape="circle"
+  porcentage={true}
+/>
+```
+
+Displays: **65.0 %**
+
+### Value with Units
+
+```jsx
+<LiquidFillPorcentaje
+  value={750}
+  maxValue={1000}
+  color="#3b82f6"
+  shape="roundRect"
+  porcentage={false}
+  unidad="L"
+/>
+```
+
+Displays: **750.00 L** (75% filled)
+
+### Different Shapes
+
+```jsx
+// Triangle gauge
+<LiquidFillPorcentaje
+  value={45}
+  maxValue={100}
+  shape="triangle"
+  color="#f59e0b"
+  porcentage={true}
+/>
+
+// Diamond gauge
+<LiquidFillPorcentaje
+  value={850}
+  maxValue={1000}
+  shape="diamond"
+  color="#ec4899"
+  unidad="m³"
+/>
+```
+
+## Multiple Values Mode
+
+The component supports displaying multiple related variables simultaneously:
+
+```jsx
+<LiquidFillPorcentaje
+  multipleValues={{
+    value: { value: 450 },
+    maxValue: 1000,
+    secondary: {
+      value: 23.5,
+      unit: "°C",
+      varsInflux: { temp: true }
+    }
+  }}
+  shape="circle"
+  color="#06b6d4"
+  unidad="L"
+/>
+```
+
+This displays the primary value (450 L) and a secondary value (23.5 °C) in the same gauge.
+
+### Multiple Values Structure
+
+<ParamField path="multipleValues.value" type="object | number">
+  Primary value to display. Can be a number or an object with a `value` property.
+</ParamField>
+
+<ParamField path="multipleValues.maxValue" type="number">
+  Maximum value for calculating fill percentage.
+</ParamField>
+
+<ParamField path="multipleValues.secondary" type="object">
+  Secondary variable configuration:
+  - `value` - The secondary value to display
+  - `unit` - Unit label for the secondary value
+  - `varsInflux` - Object indicating which InfluxDB variables are active
+</ParamField>
+
+## Visual Features
+
+### Gradient Colors
+
+The liquid fill uses a three-stop vertical gradient:
+- Top (offset 0): `#a5f3fc` (light cyan)
+- Middle (offset 0.5): Your custom color
+- Bottom (offset 1): `#0c4a6e` (dark blue)
+
+### Border Gradient
+
+When `border={true}`, the outline uses a diagonal gradient:
+- Start: `#93c5fd` (light blue)
+- End: `#1e3a8a` (dark blue)
+
+### Dynamic Text Color
+
+Text color automatically adjusts based on fill level:
+- **Above 60% fill**: White text (`#ffffff`)
+- **Below 60% fill**: Dark blue text (`#0f2a44`)
+
+In multiple values mode, the threshold is 40% instead.
+
+### Animation
+
+- **Wave animation**: 4000ms period when data is present
+- **Fill animation**: 1800ms cubic-out easing on initial load
+- **No animation**: When value is invalid or zero
+
+## Shape Configurations
+
+Each shape has optimized settings:
+
+| Shape | Radius | Amplitude | Font Size | Outline Distance |
+|-------|--------|-----------|-----------|------------------|
+| circle | 90% | 8 | 24px | 4 |
+| rect | 85% | 5 | 24px | 4 |
+| roundRect | 90% | 8 | 24px | 4 |
+| triangle | 80% | 8 | 22px | 0 |
+| diamond | 90% | 8 | 22px | 4 |
+| arrow | 70% | 8 | 18px | 4 |
+| pin | 100% | 8 | 24px | 4 |
+
+## Data Validation
+
+The component validates input values:
+- Checks for `null`, `undefined`, empty strings, and `NaN`
+- Displays **"Sin datos"** (No data) when value is invalid
+- Clamps percentage to 0-1 range (0-100%)
+- Handles missing or invalid `maxValue` gracefully
+
+## Dependencies
+
+Requires the `echarts-liquidfill` plugin:
+
+```jsx
+import 'echarts-liquidfill'
+```
+
+See: [LiquidFillPorcentaje.jsx](/home/daytona/workspace/source/src/modules/Charts/components/LiquidFillPorcentaje.jsx)

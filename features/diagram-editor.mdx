@@ -1,0 +1,740 @@
+---
+title: Diagram Editor
+description: Visual diagram editor using Konva for creating interactive water network schemas with real-time data overlays
+---
+
+## Overview
+
+The Diagram Editor is a powerful visual tool for creating interactive water network schemas. Built with Konva.js, it allows you to draw custom diagrams with images, lines, text, and polylines, then overlay real-time data from InfluxDB.
+
+<img src="/images/diagram-editor-overview.png" alt="Diagram editor interface showing water network" />
+
+## Key Features
+
+- **Drawing Tools**: Lines, polylines, text, and images
+- **Image Library**: Pre-loaded water infrastructure icons
+- **Variable Binding**: Attach InfluxDB variables to any element
+- **Real-time Overlays**: Display live data on diagram elements
+- **Animated Lines**: Flow direction indicators
+- **Zoom & Pan**: Navigate large diagrams
+- **Layer Management**: Send elements to front/back
+- **Auto-save**: Persistent storage in backend
+
+## Editor Interface
+
+### Component Architecture
+
+```jsx
+import DrawDiagram from './views/DrawDiagram'
+
+<DrawDiagram />
+```
+
+The editor consists of:
+
+1. **Top Navbar**: Save, clear, undo, zoom controls
+2. **Left Sidebar**: Drawing tool selection
+3. **Canvas Area**: Main drawing surface using Konva
+4. **Style Panels**: Configure line styles, text formatting
+5. **Variable Panel**: Assign InfluxDB variables
+
+## Drawing Tools
+
+### Line Tool
+
+Draw simple straight lines:
+
+1. Click "Line" in sidebar
+2. Click start point on canvas
+3. Click end point to complete
+4. Right-click to cancel
+
+**Configuration**:
+```javascript
+const [lineStyle, setLineStyle] = useState({
+  color: '#3b82f6',
+  strokeWidth: 5,
+})
+```
+
+### Polyline Tool
+
+Draw multi-segment lines:
+
+1. Click "Polyline" in sidebar
+2. Click to place each vertex
+3. Press Enter or double-click to finish
+4. Right-click to cancel
+
+**Adding Points**:
+- Double-click on polyline to insert new vertex
+- Vertices are draggable when selected
+
+### Text Tool
+
+Add text labels:
+
+1. Click "Text" in sidebar
+2. Click position on canvas
+3. Type text in popup editor
+4. Configure font size, color, style
+
+**Text Styling**:
+```javascript
+const [textStyle, setTextStyle] = useState({
+  fontSize: 16,
+  fill: '#000000',
+  fontStyle: 'normal',  // 'normal' | 'bold' | 'italic'
+})
+```
+
+### Image Tool
+
+Place infrastructure icons:
+
+1. Click "Image" in sidebar
+2. Select from image library
+3. Image appears at center of canvas
+4. Drag to position, resize with handles
+
+**Image Library**:
+```javascript
+const imageList = ListImg()
+// Returns array of image paths:
+// - Pumps
+// - Tanks
+// - Valves
+// - Sensors
+// - Pipes
+// - Buildings
+```
+
+## Variable Binding
+
+### Assigning Variables
+
+Attach real-time data to diagram elements:
+
+1. Select element on canvas
+2. Click "Assign Variable" in sidebar
+3. Choose InfluxDB variable from list
+4. Configure display position
+
+### Variable Configuration
+
+```javascript
+const handleAssignVariable = (dataInflux) => {
+  if (!selectedId) return
+
+  setElements((prev) =>
+    prev.map((el) =>
+      String(el.id) === String(selectedId) ? {
+        ...el,
+        dataInflux: {
+          ...dataInflux,
+          position: 'Centro',  // 'Arriba' | 'Abajo' | 'Izquierda' | 'Derecha'
+          show: true,
+        }
+      } : el
+    )
+  )
+}
+```
+
+### Display Positions
+
+Variable labels can be positioned relative to elements:
+
+- **Arriba** (Top): Above element
+- **Abajo** (Bottom): Below element
+- **Izquierda** (Left): Left side
+- **Derecha** (Right): Right side
+- **Centro** (Center): Centered on element
+
+<img src="/images/variable-positions.png" alt="Variable position options" />
+
+## Line Animations
+
+Lines display animated flow direction:
+
+```javascript
+<Line
+  points={el.points}
+  stroke={el.stroke}
+  strokeWidth={el.strokeWidth}
+  dash={[25, 10]}
+  dashOffset={el.invertAnimation ? -dashOffset : dashOffset}
+/>
+```
+
+### Animation Loop
+
+```javascript
+useEffect(() => {
+  let frameId
+
+  const animate = () => {
+    setDashOffset((prev) => 
+      reverseDirection ? prev - 1 : prev + 0.35
+    )
+    frameId = requestAnimationFrame(animate)
+  }
+
+  frameId = requestAnimationFrame(animate)
+  return () => cancelAnimationFrame(frameId)
+}, [reverseDirection])
+```
+
+### Inverting Animation
+
+Toggle flow direction per line:
+
+```javascript
+setElements((prev) =>
+  prev.map((el) =>
+    el.id === selectedId
+      ? { ...el, invertAnimation: !el.invertAnimation }
+      : el
+  )
+)
+```
+
+## Line Styling
+
+### Line Style Panel
+
+```jsx
+import LineStylePanel from './components/LineStylePanel'
+
+<LineStylePanel
+  visible={showLineStyleSelector}
+  lineStyle={lineStyle}
+  onChange={setLineStyle}
+  selectedId={selectedId}
+  elements={elements}
+  setElements={setElements}
+/>
+```
+
+### Applying Styles
+
+```javascript
+useEffect(() => {
+  if (!selectedId) return
+
+  setElements((prev) =>
+    prev.map((el) => {
+      if (String(el.id) === String(selectedId) && el.type === 'line') {
+        return {
+          ...el,
+          stroke: lineStyle.color,
+          strokeWidth: lineStyle.strokeWidth,
+        }
+      }
+      return el
+    })
+  )
+}, [lineStyle])
+```
+
+## Text Editing
+
+### Text Editor Component
+
+```jsx
+import TextEditor from './components/TextEditor'
+
+<TextEditor
+  textPosition={textPosition}
+  textStyle={textStyle}
+  textInput={textInput}
+  onChange={setTextInput}
+  onSave={() => saveText(textInput, textPosition, editingTextId)}
+  onCancel={() => {
+    setTextPosition(null)
+    setTextInput('')
+    setEditingTextId(null)
+  }}
+/>
+```
+
+### Editing Existing Text
+
+Double-click text element to edit:
+
+```javascript
+onDblClick={(e) => {
+  e.cancelBubble = true
+  setTextPosition({ x: el.x, y: el.y })
+  setTextInput(el.text)
+  setEditingTextId(el.id)
+  setTextStyle({
+    fontSize: el.fontSize || 16,
+    fill: el.fill || '#000',
+    fontStyle: el.fontStyle || 'normal',
+  })
+}}
+```
+
+## Canvas Navigation
+
+### Zoom Controls
+
+```javascript
+const handleZoomIn = () => {
+  const scaleBy = 1.05
+  setStageScale((prev) => prev * scaleBy)
+}
+
+const handleZoomOut = () => {
+  const scaleBy = 1.05
+  setStageScale((prev) => prev / scaleBy)
+}
+```
+
+### Mouse Wheel Zoom
+
+```javascript
+onWheel={(e) => {
+  e.evt.preventDefault()
+  const scaleBy = 1.05
+  const stage = e.target.getStage()
+  const oldScale = stage.scaleX()
+  const pointer = stage.getPointerPosition()
+
+  const mousePointTo = {
+    x: (pointer.x - stage.x()) / oldScale,
+    y: (pointer.y - stage.y()) / oldScale,
+  }
+
+  const direction = e.evt.deltaY > 0 ? -1 : 1
+  const newScale = direction > 0 
+    ? oldScale * scaleBy 
+    : oldScale / scaleBy
+
+  const newPos = {
+    x: pointer.x - mousePointTo.x * newScale,
+    y: pointer.y - mousePointTo.y * newScale,
+  }
+
+  setStageScale(newScale)
+  setStagePosition(newPos)
+}}
+```
+
+### Pan Mode
+
+Toggle pan mode to drag the canvas:
+
+```javascript
+const [isPanning, setIsPanning] = useState(false)
+
+<Stage
+  style={{
+    cursor: isPanning ? 'grab' : 'default'
+  }}
+  onMouseDown={(e) => {
+    if (isPanning && e.target === e.target.getStage()) {
+      setIsDraggingStage(true)
+      const pointer = e.target.getStage().getPointerPosition()
+      setDragStartPos({ x: pointer.x, y: pointer.y })
+    }
+  }}
+/>
+```
+
+## Layer Management
+
+### Send to Back
+
+```javascript
+const moveElementToBack = (id) => {
+  setElements((prev) => {
+    const index = prev.findIndex(el => el.id === id)
+    if (index === -1) return prev
+    
+    const element = prev[index]
+    return [element, ...prev.slice(0, index), ...prev.slice(index + 1)]
+  })
+}
+```
+
+### Bring to Front
+
+```javascript
+const moveElementToFront = (id) => {
+  setElements((prev) => {
+    const index = prev.findIndex(el => el.id === id)
+    if (index === -1) return prev
+    
+    const element = prev[index]
+    return [...prev.slice(0, index), ...prev.slice(index + 1), element]
+  })
+}
+```
+
+## Saving Diagrams
+
+### Save Flow
+
+```javascript
+const handleSaveDiagram = async (navigate) => {
+  const { value: nombre } = await Swal.fire({
+    title: 'Guardar diagrama',
+    input: 'text',
+    inputLabel: 'Nombre del diagrama',
+    inputValue: diagramMetadata.title || '',
+    showCancelButton: true,
+    inputValidator: (value) => {
+      if (!value.trim()) {
+        return '¡Debes ingresar un nombre!'
+      }
+    }
+  })
+
+  if (!nombre) return
+
+  const diagramToSave = {
+    elements: elementsToSave,
+    circles,
+    diagramMetadata: {
+      ...diagramMetadata,
+      title: nombre,
+    },
+    deleted: deletedItems,
+  }
+
+  await saveDiagramKonva({
+    ...diagramToSave,
+    navigate
+  })
+}
+```
+
+### Element Serialization
+
+```javascript
+const elementsToSave = elements.map(el => {
+  const element = { ...el }
+  
+  // Remove ID for new elements
+  if (!diagramMetadata.id || newElementsIds.includes(el.id)) {
+    delete element.id
+  }
+  
+  return element
+})
+```
+
+## Loading Diagrams
+
+```javascript
+useEffect(() => {
+  if (id) {
+    setIsLoading(true)
+
+    uploadCanvaDb(id, {
+      setCircles,
+      setDiagramMetadata,
+      setTool,
+    }).then((elements) => {
+      setElements(elements)
+    }).finally(() => {
+      setIsLoading(false)
+    })
+  }
+}, [id])
+```
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| Esc | Cancel current tool |
+| Enter | Finish polyline |
+| Delete | Delete selected element |
+| Ctrl+Z | Undo last action |
+
+### Shortcut Implementation
+
+```javascript
+useEffect(() => {
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      setShowLineStyleSelector(false)
+      setLineStart(null)
+      setTool('')
+      if (textPosition) {
+        setTextPosition(null)
+        setTextInput('')
+        setEditingTextId(null)
+      }
+      if (isDrawingPolyline) {
+        setIsDrawingPolyline(false)
+        setPolylinePoints([])
+        setTempLine(null)
+      }
+    }
+    
+    if (e.key === 'Enter' && isDrawingPolyline) {
+      finishPolyline()
+    }
+    
+    if (e.key === 'Delete' && selectedId) {
+      handleDeleteElement(selectedId)
+      setTool('')
+      setSelectedId(null)
+    }
+  }
+  
+  window.addEventListener('keydown', handleKeyDown)
+  return () => window.removeEventListener('keydown', handleKeyDown)
+}, [selectedId, lineStart, textPosition, isDrawingPolyline])
+```
+
+## Variable Overlays
+
+### Label Rendering
+
+Variables display as floating labels:
+
+```jsx
+{el.dataInflux?.name && (
+  <Label 
+    x={labelX} 
+    y={labelY} 
+    opacity={el.dataInflux.show ? 1 : 0.5}
+  >
+    <Tag
+      fill="white"
+      pointerDirection="down"
+      pointerWidth={10}
+      pointerHeight={10}
+      cornerRadius={5}
+    />
+    <Text
+      text={el.dataInflux.name}
+      fontFamily="arial"
+      fontSize={14}
+      padding={8}
+      fill="black"
+    />
+  </Label>
+)}
+```
+
+### Boolean Color Configuration
+
+For boolean variables, configure ON/OFF colors:
+
+```javascript
+const handleBooleanColorChange = (colorOn, colorOff) => {
+  setElements((prev) =>
+    prev.map((el) =>
+      String(el.id) === String(selectedId)
+        ? {
+            ...el,
+            dataInflux: {
+              ...el.dataInflux,
+              booleanColors: { colorOn, colorOff }
+            }
+          }
+        : el
+    )
+  )
+}
+```
+
+### Binary Bit Selection
+
+For variables with binary fields:
+
+```javascript
+const handleSetBinaryBit = (bitName) => {
+  setElements((prev) =>
+    prev.map((el) =>
+      String(el.id) === String(selectedId)
+        ? {
+            ...el,
+            dataInflux: {
+              ...el.dataInflux,
+              bit_name: bitName
+            }
+          }
+        : el
+    )
+  )
+}
+```
+
+## Custom Hooks
+
+### useDiagramState
+
+Manages diagram elements and selection:
+
+```javascript
+const {
+  elements,
+  setElements,
+  selectedId,
+  setSelectedId,
+  deletedItems,
+  setDeletedItems,
+  handleDeleteElement,
+  moveElementToBack,
+  moveElementToFront
+} = useDiagramState()
+```
+
+### useDrawingTools
+
+Handles drawing tool logic:
+
+```javascript
+const {
+  lineStart,
+  tempLine,
+  polylinePoints,
+  isDrawingPolyline,
+  handleMouseDown,
+  handleMouseMove,
+  handleMouseUp,
+  finishPolyline,
+  addImageToCanvas,
+} = useDrawingTools({
+  tool,
+  setTool,
+  lineStyle,
+  elements,
+  setElements,
+})
+```
+
+### useTooltipManager
+
+Manages variable overlay configuration:
+
+```javascript
+const {
+  handleShowTooltip,
+  handleHideTooltip,
+  handleChangeTooltipPosition,
+  handleSetMaxValue,
+  handleBooleanColorChange,
+  handleSetBinaryBit
+} = useTooltipManager({
+  selectedId,
+  elements,
+  setElements
+})
+```
+
+## Performance Optimization
+
+### Batch Drawing
+
+Konva automatically batches rendering:
+
+```javascript
+transformerRef.current.nodes([selectedNode])
+transformerRef.current.getLayer().batchDraw()
+```
+
+### Lazy Loading Images
+
+Images load on-demand:
+
+```javascript
+const img = new window.Image()
+img.src = imagePath
+img.onload = () => {
+  const newImage = {
+    id: String(Date.now()),
+    type: 'image',
+    src: img.src,
+    x: 150,
+    y: 150,
+    width: 100,
+    height: (img.height / img.width) * 100,
+  }
+  setElements((prev) => [...prev, newImage])
+}
+```
+
+## Use Cases
+
+### Water Distribution Schema
+
+1. Add tank images at source locations
+2. Draw polylines for pipe networks
+3. Add pump images at station locations
+4. Bind flow rate variables to pipes
+5. Bind level variables to tanks
+6. Add pressure sensor variables
+
+### Treatment Plant Layout
+
+1. Use building images for structures
+2. Draw flow lines between processes
+3. Add text labels for equipment names
+4. Bind process variables to equipment
+5. Use boolean indicators for valve states
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Diagram Organization">
+    - Use layers effectively (pipes behind, labels on top)
+    - Group related elements visually
+    - Use consistent colors for similar infrastructure
+    - Keep variable labels concise
+  </Accordion>
+
+  <Accordion title="Performance">
+    - Limit diagrams to 100-150 elements
+    - Use simple images (PNG with transparency)
+    - Avoid excessive animation on many lines
+    - Save frequently during complex edits
+  </Accordion>
+
+  <Accordion title="Variable Binding">
+    - Only bind variables that need real-time display
+    - Use appropriate position for each element type
+    - Configure boolean colors to match UI theme
+    - Test variable updates before finalizing diagram
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+### Elements Not Selectable
+
+1. Check element is not behind others (use layer controls)
+2. Verify transformer is properly attached
+3. Ensure element has unique ID
+
+### Variables Not Displaying
+
+1. Confirm variable is assigned to element
+2. Check `show: true` in dataInflux config
+3. Verify InfluxDB variable exists and has data
+4. Check position is not off-canvas
+
+### Performance Issues
+
+1. Reduce number of animated lines
+2. Simplify complex polylines
+3. Use lower resolution images
+4. Clear browser cache
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Maps" icon="map-location-dot" href="/features/maps">
+    Create geographic maps of infrastructure
+  </Card>
+  <Card title="Charts" icon="chart-area" href="/features/charts-visualization">
+    Display diagram data in charts
+  </Card>
+</CardGroup>

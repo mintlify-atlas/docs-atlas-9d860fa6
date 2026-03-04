@@ -1,0 +1,735 @@
+---
+title: API Endpoints
+description: Complete reference for Mas Agua REST API endpoints
+---
+
+## Data & Monitoring
+
+### POST /seriesDataInflux
+
+Retrieve time-series data from InfluxDB for chart visualization.
+
+<ParamField body="query" type="array" required>
+  Array of query objects defining the data to retrieve
+</ParamField>
+
+<ParamField body="query[].measurement" type="string">
+  InfluxDB measurement name
+</ParamField>
+
+<ParamField body="query[].field" type="string">
+  Field to query from the measurement
+</ParamField>
+
+<ParamField body="query[].samplingPeriod" type="string">
+  Sampling interval (e.g., "5m", "1h", "30s")
+</ParamField>
+
+<CodeGroup>
+```javascript Request
+import { request } from './utils/js/request';
+import { backend } from './utils/routes/app.routes';
+
+const query = [
+  {
+    measurement: 'water_flow',
+    field: 'flow_rate',
+    samplingPeriod: '5m'
+  }
+];
+
+const { data } = await request(
+  `${backend['Mas Agua']}/seriesDataInflux`,
+  'POST',
+  query
+);
+```
+
+```bash cURL
+curl -X POST https://masagua.cooptech.com.ar/api/seriesDataInflux \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '[{
+    "measurement": "water_flow",
+    "field": "flow_rate",
+    "samplingPeriod": "5m"
+  }]'
+```
+</CodeGroup>
+
+<ResponseField name="data" type="object">
+  Object with variable IDs as keys and arrays of time/value pairs as values
+</ResponseField>
+
+```json Response
+{
+  "data": {
+    "var_123": [
+      { "time": "01/03/26, 10:00:00 a. m.", "value": 1.65 },
+      { "time": "01/03/26, 10:05:00 a. m.", "value": 1.72 },
+      { "time": "01/03/26, 10:10:00 a. m.", "value": 1.58 }
+    ]
+  }
+}
+```
+
+Refer to `src/modules/dashBoard/factories/chartQueryBuilderMap.js:66-70`.
+
+---
+
+### POST /dataInflux
+
+Retrieve a single data point from InfluxDB for real-time values.
+
+<ParamField body="varsInflux" type="object" required>
+  Variable configuration object from InfluxDB
+</ParamField>
+
+<ParamField body="varsInflux.calc_field" type="string">
+  Calculated field name to retrieve
+</ParamField>
+
+<CodeGroup>
+```javascript Request
+const { data } = await request(
+  `${backend['Mas Agua']}/dataInflux`,
+  'POST',
+  {
+    calc_field: 'chlorine_level',
+    measurement: 'water_quality'
+  }
+);
+```
+
+```bash cURL
+curl -X POST https://masagua.cooptech.com.ar/api/dataInflux \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "calc_field": "chlorine_level",
+    "measurement": "water_quality"
+  }'
+```
+</CodeGroup>
+
+<ResponseField name="data" type="object">
+  Object containing the current value for the requested field
+</ResponseField>
+
+```json Response
+{
+  "data": {
+    "chlorine_level": {
+      "value": 0.65
+    }
+  }
+}
+```
+
+See `src/modules/dashBoard/factories/chartQueryBuilderMap.js:149-152`.
+
+---
+
+### POST /multipleDataInflux
+
+Retrieve multiple real-time data points in a single request.
+
+<ParamField body="influxVarsToRequest" type="array" required>
+  Array of data objects with variable configurations
+</ParamField>
+
+<ParamField body="influxVarsToRequest[].dataInflux" type="object">
+  Variable metadata including ID, name, unit, and varsInflux configuration
+</ParamField>
+
+<CodeGroup>
+```javascript Request
+const influxVarsToRequest = [
+  {
+    dataInflux: {
+      id: 'var_1',
+      name: 'flow_rate',
+      unit: 'm3/h',
+      varsInflux: {
+        measurement: 'water_flow',
+        field: 'flow'
+      }
+    }
+  },
+  {
+    dataInflux: {
+      id: 'var_2',
+      name: 'pressure',
+      unit: 'bar',
+      varsInflux: {
+        measurement: 'water_pressure',
+        field: 'pressure'
+      }
+    }
+  }
+];
+
+const response = await request(
+  `${backend['Mas Agua']}/multipleDataInflux`,
+  'POST',
+  influxVarsToRequest
+);
+const values = response.data;
+```
+
+```bash cURL
+curl -X POST https://masagua.cooptech.com.ar/api/multipleDataInflux \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '[{
+    "dataInflux": {
+      "id": "var_1",
+      "name": "flow_rate",
+      "varsInflux": {
+        "measurement": "water_flow",
+        "field": "flow"
+      }
+    }
+  }]'
+```
+</CodeGroup>
+
+<ResponseField name="data" type="object">
+  Object with variable IDs as keys and current values
+</ResponseField>
+
+```json Response
+{
+  "data": {
+    "var_1": 1.65,
+    "var_2": 3.2
+  }
+}
+```
+
+Refer to `src/modules/DrawDiagram/utils/js/drawActions.js:175-179`.
+
+---
+
+## Diagram Management
+
+### GET /getObjectCanva
+
+Retrieve diagram canvas objects including lines, images, texts, and polylines.
+
+<ParamField query="id" type="integer" required>
+  Diagram ID to retrieve
+</ParamField>
+
+<CodeGroup>
+```javascript Request
+const objectDiagram = await request(
+  `${backend['Mas Agua']}/getObjectCanva?id=${diagramId}`,
+  'GET'
+).then((res) => res?.data?.[0]);
+```
+
+```bash cURL
+curl -X GET "https://masagua.cooptech.com.ar/api/getObjectCanva?id=5" \
+  -H "Authorization: Bearer <token>"
+```
+</CodeGroup>
+
+<ResponseField name="data" type="array">
+  Array containing the diagram object
+</ResponseField>
+
+<ResponseField name="data[0].id" type="integer">
+  Diagram ID
+</ResponseField>
+
+<ResponseField name="data[0].title" type="string">
+  Diagram title
+</ResponseField>
+
+<ResponseField name="data[0].backgroundColor" type="string">
+  Background color (hex code)
+</ResponseField>
+
+<ResponseField name="data[0].backgroundImg" type="string">
+  Background image URL
+</ResponseField>
+
+<ResponseField name="data[0].lines" type="array">
+  Array of line objects
+</ResponseField>
+
+<ResponseField name="data[0].polylines" type="array">
+  Array of polyline objects
+</ResponseField>
+
+<ResponseField name="data[0].texts" type="array">
+  Array of text objects
+</ResponseField>
+
+<ResponseField name="data[0].images" type="array">
+  Array of image objects with associated variables
+</ResponseField>
+
+```json Response
+{
+  "data": [
+    {
+      "id": 5,
+      "title": "Water Treatment Plant",
+      "backgroundColor": "#ffffff",
+      "backgroundImg": "https://example.com/bg.png",
+      "lines": [
+        {
+          "id": 1,
+          "points": {
+            "start": { "left": 100, "top": 200 },
+            "end": { "left": 300, "top": 200 }
+          },
+          "stroke": "#0000ff",
+          "strokeWidth": 2,
+          "variable": {
+            "name": "flow_rate",
+            "unit": "m3/h",
+            "varsInflux": {...}
+          }
+        }
+      ],
+      "images": [...],
+      "texts": [...],
+      "polylines": [...]
+    }
+  ]
+}
+```
+
+See `src/modules/DrawDiagram/utils/js/drawActions.js:14-17`.
+
+---
+
+### POST /saveDiagram
+
+Save or update a diagram with all canvas objects.
+
+<ParamField body="diagram" type="object" required>
+  Diagram metadata
+</ParamField>
+
+<ParamField body="diagram.id" type="integer">
+  Diagram ID (omit for new diagrams)
+</ParamField>
+
+<ParamField body="diagram.title" type="string" required>
+  Diagram title
+</ParamField>
+
+<ParamField body="diagram.backgroundColor" type="string">
+  Background color
+</ParamField>
+
+<ParamField body="diagram.backgroundImg" type="string">
+  Background image URL
+</ParamField>
+
+<ParamField body="lines" type="array">
+  Array of line objects to save
+</ParamField>
+
+<ParamField body="polylines" type="array">
+  Array of polyline objects to save
+</ParamField>
+
+<ParamField body="texts" type="array">
+  Array of text objects to save
+</ParamField>
+
+<ParamField body="images" type="array">
+  Array of image objects to save
+</ParamField>
+
+<ParamField body="deleted" type="object">
+  Object containing arrays of deleted object IDs
+</ParamField>
+
+<CodeGroup>
+```javascript Request
+const saveObjects = {
+  diagram: {
+    id: 5,
+    title: 'Water Treatment Plant',
+    status: 1,
+    backgroundColor: '#ffffff',
+    backgroundImg: ''
+  },
+  lines: [
+    {
+      id: 1,
+      id_influxvars: 'var_123',
+      points: {
+        start: { left: 100, top: 200 },
+        end: { left: 300, top: 200 }
+      },
+      stroke: '#0000ff',
+      strokeWidth: 2,
+      animation: 1,
+      invertAnimation: false,
+      status: 1
+    }
+  ],
+  images: [],
+  texts: [],
+  polylines: [],
+  deleted: {
+    lines: [],
+    images: [3, 5],
+    texts: [],
+    polylines: []
+  }
+};
+
+await request(
+  `${backend['Mas Agua']}/saveDiagram`,
+  'POST',
+  saveObjects
+);
+```
+
+```bash cURL
+curl -X POST https://masagua.cooptech.com.ar/api/saveDiagram \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "diagram": {
+      "title": "Water Treatment Plant",
+      "status": 1
+    },
+    "lines": [...],
+    "images": [...]
+  }'
+```
+</CodeGroup>
+
+<ResponseField name="success" type="boolean">
+  Indicates if the save operation was successful
+</ResponseField>
+
+Refer to `src/modules/DrawDiagram/utils/js/drawActions.js:364`.
+
+---
+
+## Configuration & Variables
+
+### GET /getVarsInflux
+
+Retrieve all InfluxDB variables available for the current schema.
+
+<CodeGroup>
+```javascript Request
+import { request } from './utils/js/request';
+import { backend } from './utils/routes/app.routes';
+
+const list = await request(
+  `${backend['Mas Agua']}/getVarsInflux`,
+  'GET'
+);
+
+if (list?.data) {
+  const variables = list.data;
+  // Use variables...
+}
+```
+
+```bash cURL
+curl -X GET https://masagua.cooptech.com.ar/api/getVarsInflux \
+  -H "Authorization: Bearer <token>"
+```
+</CodeGroup>
+
+<ResponseField name="data" type="array">
+  Array of variable objects with InfluxDB configuration
+</ResponseField>
+
+```json Response
+{
+  "data": [
+    {
+      "id": "var_123",
+      "name": "flow_rate",
+      "unit": "m3/h",
+      "type": "number",
+      "varsInflux": {
+        "measurement": "water_flow",
+        "field": "flow",
+        "calc_field": "flow_rate"
+      }
+    },
+    {
+      "id": "var_124",
+      "name": "pressure",
+      "unit": "bar",
+      "type": "number",
+      "varsInflux": {...}
+    }
+  ]
+}
+```
+
+See `src/modules/DrawDiagram/components/Fields/actions.js:5-8`.
+
+---
+
+### GET /getConfigNotify
+
+Retrieve notification configuration for MQTT devices.
+
+<CodeGroup>
+```javascript Request
+const config = await request(
+  `${backend['Mas Agua']}/getConfigNotify`,
+  'GET'
+);
+
+const configData = config.data;
+```
+
+```bash cURL
+curl -X GET https://masagua.cooptech.com.ar/api/getConfigNotify \
+  -H "Authorization: Bearer <token>"
+```
+</CodeGroup>
+
+<ResponseField name="data" type="object">
+  Nested object organized by device, brand, and version
+</ResponseField>
+
+```json Response
+{
+  "data": {
+    "Reconectador": {
+      "NOJA": {
+        "v1": [
+          {
+            "id": 1,
+            "id_event_influx": 100,
+            "alarm": true
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+Refer to `src/modules/ConfigNotifications/utils/js/index.js:5`.
+
+---
+
+### POST /sendConfigMQTT
+
+Send configuration to MQTT devices.
+
+<ParamField body="topic" type="string" required>
+  MQTT topic to publish to
+</ParamField>
+
+<ParamField body="data" type="object" required>
+  Configuration data to send
+</ParamField>
+
+<CodeGroup>
+```javascript Request
+const topic = 'coop/energia/Reconectadores/NOJA/0310123456789/action';
+const data = {
+  source_0: [100, 101, 102]
+};
+
+await request(
+  `${backend['Mas Agua']}/sendConfigMQTT`,
+  'POST',
+  { topic, data }
+);
+```
+
+```bash cURL
+curl -X POST https://masagua.cooptech.com.ar/api/sendConfigMQTT \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "topic": "coop/energia/Reconectadores/NOJA/0310123456789/action",
+    "data": {
+      "source_0": [100, 101, 102]
+    }
+  }'
+```
+</CodeGroup>
+
+<ResponseField name="success" type="boolean">
+  Indicates if the MQTT message was sent successfully
+</ResponseField>
+
+See `src/modules/ConfigNotifications/utils/js/index.js:68-71`.
+
+---
+
+## Menu & Permissions
+
+### GET /getAllMenu
+
+Retrieve all menu items for the application.
+
+<CodeGroup>
+```javascript Request
+const menusResponse = await request(
+  `${backend['Mas Agua']}/getAllMenu`,
+  'GET'
+);
+
+const menus = menusResponse?.data || [];
+```
+
+```bash cURL
+curl -X GET https://masagua.cooptech.com.ar/api/getAllMenu \
+  -H "Authorization: Bearer <token>"
+```
+</CodeGroup>
+
+<ResponseField name="data" type="array">
+  Array of menu item objects
+</ResponseField>
+
+```json Response
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Dashboard",
+      "icon": "dashboard",
+      "path": "/dashboard",
+      "status": true
+    },
+    {
+      "id": 2,
+      "name": "Diagrams",
+      "icon": "diagram",
+      "path": "/diagrams",
+      "status": true
+    }
+  ]
+}
+```
+
+Refer to `src/modules/NavBarCustom/utils/js/index.js:33`.
+
+---
+
+### GET /getPermission
+
+Retrieve user or profile permissions for menu items.
+
+<ParamField query="id" type="string" required>
+  User ID or profile ID
+</ParamField>
+
+<ParamField query="type" type="string" required>
+  Permission type: "id_user" or "id_profile"
+</ParamField>
+
+<ParamField query="profile" type="string">
+  Profile ID (when querying by user)
+</ParamField>
+
+<CodeGroup>
+```javascript Request
+const usuario = storage.get('usuario');
+
+const permissiondata = await request(
+  `${backend['Mas Agua']}/getPermission?id=${usuario.sub}&type=id_user&profile=${usuario.profile}`,
+  'GET'
+);
+
+const permissions = permissiondata?.data || [];
+```
+
+```bash cURL
+curl -X GET "https://masagua.cooptech.com.ar/api/getPermission?id=123&type=id_user&profile=4" \
+  -H "Authorization: Bearer <token>"
+```
+</CodeGroup>
+
+<ResponseField name="data" type="array">
+  Array of permission objects
+</ResponseField>
+
+```json Response
+{
+  "data": [
+    {
+      "id": 28,
+      "id_menu": 1,
+      "id_profile": 4,
+      "id_user": null,
+      "status": true
+    },
+    {
+      "id": 112,
+      "id_menu": 25,
+      "id_profile": null,
+      "id_user": 6,
+      "status": false
+    }
+  ]
+}
+```
+
+See `src/modules/NavBarCustom/utils/js/index.js:18-22`.
+
+---
+
+## Error Responses
+
+All endpoints may return the following error responses:
+
+### 401 Unauthorized
+
+```json
+{
+  "error": {
+    "message": "Invalid or expired token",
+    "code": "UNAUTHORIZED"
+  }
+}
+```
+
+### 500 Internal Server Error
+
+Server errors return detailed error messages extracted from the response:
+
+```json
+{
+  "error1": { "message": "Database connection failed" },
+  "error2": { "message": "Invalid query parameters" }
+}
+```
+
+The client utility concatenates these into a single error message:
+
+```javascript
+// Extracted error: "Database connection failed Invalid query parameters"
+```
+
+## Rate Limits
+
+<Info>
+No explicit rate limits are currently enforced, but clients should implement reasonable throttling to avoid server overload.
+</Info>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock" href="/api/authentication">
+    Learn about JWT token authentication
+  </Card>
+  <Card title="Components" icon="puzzle-piece" href="/components/charts/liquid-fill">
+    Explore chart components that use these endpoints
+  </Card>
+</CardGroup>

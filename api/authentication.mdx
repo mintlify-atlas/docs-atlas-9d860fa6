@@ -1,0 +1,313 @@
+---
+title: Authentication
+description: Authenticate API requests using JWT Bearer tokens
+---
+
+## Overview
+
+Mas Agua uses **JWT (JSON Web Token) Bearer authentication** for securing API endpoints. Tokens are obtained during login and must be included in the `Authorization` header of subsequent requests.
+
+## Authentication Flow
+
+<Steps>
+  <Step title="Login">
+    User authenticates with email and Cooptech token to receive a JWT token
+  </Step>
+  <Step title="Store Token">
+    Token is stored in cookies (web) or Tauri store (desktop app)
+  </Step>
+  <Step title="Include in Requests">
+    Token is automatically included in the Authorization header for all API requests
+  </Step>
+  <Step title="Token Refresh">
+    If token expires, user must re-authenticate
+  </Step>
+</Steps>
+
+## Token Storage
+
+Tokens are stored differently depending on the platform:
+
+### Web Application (Cookies)
+
+```javascript
+import Cookies from 'js-cookie';
+
+// Store token
+Cookies.set('token', jwtToken);
+
+// Retrieve token
+const token = Cookies.get('token');
+```
+
+### Desktop Application (Tauri Store)
+
+```javascript
+import { load } from '@tauri-apps/plugin-store';
+
+const store = await load('store.json', { autoSave: false });
+
+// Store token
+await store.set('token', jwtToken);
+await store.save();
+
+// Retrieve token
+const token = await store.get('token');
+```
+
+Refer to `src/storage/cookies-store.js` for the full implementation.
+
+## Login Endpoint
+
+### POST /loginCooptech
+
+Authenticate a user and receive a JWT token.
+
+<ParamField body="email" type="string" required>
+  User email address
+</ParamField>
+
+<ParamField body="tokenApp" type="string" required>
+  Cooptech application token from user profile
+</ParamField>
+
+<ParamField body="schemaName" type="string" required>
+  Database schema name for the client
+</ParamField>
+
+<ParamField body="influx_name" type="string" required>
+  InfluxDB database name for time-series data
+</ParamField>
+
+<CodeGroup>
+```javascript Request
+import { backend } from './utils/routes/app.routes';
+import { request } from './utils/js/request';
+
+const urlToken = backend['Mas Agua'] + '/loginCooptech';
+const info = {
+  email: 'user@example.com',
+  tokenApp: 'user_token_from_cooptech',
+  schemaName: 'client_schema',
+  influx_name: 'client_influx_db'
+};
+
+const response = await request(urlToken, 'POST', info);
+const token = response.data;
+```
+
+```bash cURL
+curl -X POST https://masagua.cooptech.com.ar/api/loginCooptech \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "tokenApp": "user_token_from_cooptech",
+    "schemaName": "client_schema",
+    "influx_name": "client_influx_db"
+  }'
+```
+</CodeGroup>
+
+<ResponseField name="data" type="string">
+  JWT token to be used for authenticated requests
+</ResponseField>
+
+```json Response
+{
+  "data": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+See implementation at `src/modules/LoginApp/utils/login.js:7-23`.
+
+## Making Authenticated Requests
+
+### Using the Request Utility
+
+The `request()` utility automatically handles authentication:
+
+```javascript
+import { request } from './utils/js/request';
+import { backend } from './utils/routes/app.routes';
+
+// Token is automatically retrieved from storage and included
+const response = await request(
+  `${backend['Mas Agua']}/getVarsInflux`,
+  'GET'
+);
+```
+
+### Request Implementation
+
+The request utility retrieves the token and includes it in the Authorization header:
+
+<CodeGroup>
+```javascript src/utils/js/request.js
+import axios from 'axios';
+import { storage } from '../../storage/storage';
+import { getData } from '../../storage/cookies-store';
+
+export const request = async (url, method, data = false) => {
+  if (!url || !method) {
+    throw new Error('URL o método no proporcionados');
+  }
+  
+  // Retrieve token from cookies or local storage
+  let token = await getData('token');
+  if (!token) {
+    token = storage.get('tokenCooptech');
+  }
+  
+  try {
+    const response = await axios({
+      method,
+      url,
+      data: data || {},
+      withCredentials: true,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ' + token,  // JWT token
+      },
+    });
+    return response;
+  } catch (error) {
+    // Error handling...
+    throw error;
+  }
+};
+```
+</CodeGroup>
+
+## Authorization Header Format
+
+All authenticated requests must include the JWT token in the Authorization header:
+
+```
+Authorization: Bearer <token>
+```
+
+### Example Request Headers
+
+```bash
+GET /api/getVarsInflux HTTP/1.1
+Host: masagua.cooptech.com.ar
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+## Public Endpoints
+
+Some endpoints do not require authentication. Use the `requestPublic()` utility for these:
+
+```javascript
+import { requestPublic } from './utils/js/request';
+
+const response = await requestPublic(
+  `${backend['Mas Agua']}/publicEndpoint`,
+  'GET'
+);
+```
+
+Public requests omit the Authorization header but still include credentials:
+
+```javascript
+const response = await axios({
+  method,
+  url,
+  data: data || {},
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+    // No Authorization header
+  },
+});
+```
+
+## File Upload Authentication
+
+File upload endpoints use special access credentials instead of JWT tokens:
+
+```javascript
+import { requestFile } from './utils/js/request';
+
+const formData = new FormData();
+formData.append('file', fileBlob);
+
+const response = await requestFile(
+  `${backend.Archivos}/upload`,
+  'POST',
+  formData
+);
+```
+
+File requests use custom access keys:
+
+```javascript
+headers: {
+  'accesskey': 'ZRJGodMUp2FzrLF9N9fg',
+  'secretkey': 'KYTjiz1pC6AGM1U07mlDl2mUmDvUSNqnX6iM6DjL',
+  'Content-Type': 'multipart/form-data',
+}
+```
+
+<Warning>
+Access keys shown above are from source code. In production, these should be stored as environment variables.
+</Warning>
+
+See `src/utils/js/request.js:72-92` for the file upload implementation.
+
+## Token Expiration
+
+When a token expires, the API will return a **401 Unauthorized** response. The client should:
+
+1. Detect the 401 status code
+2. Clear the stored token
+3. Redirect the user to the login page
+4. Re-authenticate to obtain a new token
+
+```javascript
+try {
+  const response = await request(url, method, data);
+} catch (error) {
+  if (error.response?.status === 401) {
+    // Token expired - redirect to login
+    await removeData('token');
+    window.location.href = '/login';
+  }
+}
+```
+
+## Security Best Practices
+
+<AccordionGroup>
+  <Accordion title="Store tokens securely">
+    - Use httpOnly cookies when possible
+    - Never expose tokens in URL parameters
+    - Clear tokens on logout
+  </Accordion>
+  
+  <Accordion title="Validate tokens server-side">
+    - Always verify JWT signature on the server
+    - Check token expiration
+    - Validate user permissions
+  </Accordion>
+  
+  <Accordion title="Use HTTPS in production">
+    - All API requests should use HTTPS in production
+    - Never send tokens over unencrypted connections
+  </Accordion>
+  
+  <Accordion title="Implement token refresh">
+    - Consider implementing refresh tokens for better UX
+    - Automatically refresh before expiration
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<Card title="Explore Endpoints" icon="code" href="/api/endpoints">
+  Learn about available API endpoints and how to use them
+</Card>
