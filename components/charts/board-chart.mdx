@@ -1,0 +1,258 @@
+---
+title: "Board chart"
+description: "Composite dashboard component combining multiple chart types and real-time data displays"
+icon: "dashboard"
+---
+
+The `BoardChart` component is a complex dashboard layout that combines multiple visualization types into a single view. It's designed for comprehensive system monitoring with real-time data updates.
+
+## Component location
+
+Source: `/src/modules/Charts/components/BoardChart.jsx:1`
+
+## Overview
+
+BoardChart organizes data into three main sections:
+
+1. **Top charts** (left and right): Large visualization cards using LiquidFill or CirclePorcentaje
+2. **Pump monitoring section**: Grid of pump status cards with real-time values
+3. **Room status section**: Grid of operational parameter displays
+
+## Structure
+
+```jsx
+<div className="grid grid-cols-12 gap-3">
+  {/* Top Left Chart */}
+  <div className="col-span-6 lg:col-span-4">
+    <ChartCard />
+  </div>
+  
+  {/* Top Right Chart */}
+  <div className="col-span-6 lg:col-span-4">
+    <ChartCard />
+  </div>
+  
+  {/* Pump Monitoring */}
+  <div className="col-span-12 lg:col-span-4">
+    <PumpGrid />
+  </div>
+  
+  {/* Room Status */}
+  <div className="col-span-12">
+    <RoomStatusGrid />
+  </div>
+</div>
+```
+
+## Configuration structure
+
+Board charts are configured through `/config/graphic/board` with three data types:
+
+### 1. Top charts
+
+Each top chart (left/right) can be either:
+- **LiquidFillPorcentaje**: Animated liquid fill gauge
+- **CirclePorcentaje**: Circular percentage gauge
+
+Configuration keys:
+- `topLeftChartType` / `topRightChartType`: Component type
+- `topLeftTitle` / `topRightTitle`: Chart title
+- Chart data with InfluxDB variable binding
+
+### 2. Pump monitoring data
+
+Array of pump status cards, each with:
+- `id`: Unique identifier
+- `name`: Pump label
+- `varId`: Linked InfluxDB variable ID
+- `value`: Variable path (e.g., "topic.field")
+- `unit`: Display unit (optional)
+- `type`: "pump"
+
+### 3. Room status data
+
+Array of operational parameters, each with:
+- `id`: Unique identifier  
+- `name`: Parameter label
+- `varId`: Linked InfluxDB variable ID
+- `value`: Variable path
+- `unit`: Display unit (optional)
+- `type`: "status"
+
+## Real-time data resolution
+
+The component resolves values from multiple sources:
+
+```javascript
+const resolveValue = (item, inflValues) => {
+  // Static value
+  if (item.value !== null && item.value !== undefined) {
+    return item.value
+  }
+  
+  // InfluxDB real-time value
+  const influxId = item?.InfluxVars?.id
+  if (influxId !== undefined) {
+    return inflValues?.[influxId] ?? null
+  }
+  
+  return null
+}
+```
+
+## Value formatting
+
+```javascript
+const formatValue = (value) => {
+  if (value === null || value === undefined) return 'Sin Datos'
+  if (typeof value === 'boolean') return value ? 'Encendido' : 'Apagado'
+  if (typeof value === 'number') 
+    return Number.isFinite(value) ? Number(value.toFixed(2)) : '-'
+  return String(value)
+}
+```
+
+## Pump monitoring cards
+
+Each pump card displays:
+- **Name**: Pump identifier
+- **Value**: Formatted numeric value
+- **Unit**: Measurement unit (if provided)
+- **Border**: Light border with shadow
+
+Layout:
+- Grid: 2-4 columns (responsive)
+- Background: White with rounded corners
+- Spacing: Gap-2 between cards
+
+## Room status display
+
+Displays operational parameters in two layouts:
+
+**Desktop (≥ lg):**
+- Horizontal list with label-value pairs
+- Separated by vertical dividers
+
+**Mobile (< lg):**
+- Vertical stacked rows
+- Full width label-value pairs
+
+## Chart card wrapper
+
+Top charts are wrapped in `ChartComponentDbWrapper` which:
+- Handles real-time data injection
+- Manages component lifecycle
+- Resolves InfluxDB values
+- Passes formatted props to child components
+
+## Usage in dashboards
+
+Board charts are configured and displayed through:
+
+1. **Configuration page**: `/config/graphic/board`
+   - Select chart types for top left/right
+   - Configure pump monitoring variables
+   - Set up room status parameters
+
+2. **Display pages**: 
+   - `/boards` - Dedicated board view
+   - Integrated into custom dashboards
+
+## Example configuration
+
+```json
+{
+  "id": "board-1",
+  "type": "BoardChart",
+  "ChartConfig": [
+    { "key": "topLeftChartType", "value": "LiquidFillPorcentaje" },
+    { "key": "topLeftTitle", "value": "Nivel Tanque 1" },
+    { "key": "topRightChartType", "value": "CirclePorcentaje" },
+    { "key": "topRightTitle", "value": "Presión Sistema" }
+  ],
+  "ChartData": [
+    {
+      "key": "topLeft",
+      "InfluxVars": {
+        "id": 123,
+        "varsInflux": "tank.level",
+        "unit": "%"
+      }
+    }
+  ],
+  "BombsData": [
+    {
+      "id": 1,
+      "name": "Bomba Principal",
+      "type": "pump",
+      "varId": 456,
+      "InfluxVars": {
+        "varsInflux": "pump.flow",
+        "unit": "L/s"
+      }
+    },
+    {
+      "id": 2,
+      "name": "Temperatura",
+      "type": "status",
+      "varId": 789,
+      "InfluxVars": {
+        "varsInflux": "system.temp",
+        "unit": "°C"
+      }
+    }
+  ]
+}
+```
+
+## Styling classes
+
+**Container:**
+```css
+grid grid-cols-12 gap-3 h-full
+```
+
+**Chart cards:**
+```css
+col-span-6 lg:col-span-4
+flex flex-col
+rounded-xl border border-gray-300
+h-full
+```
+
+**Pump grid:**
+```css
+grid grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-4 gap-2
+```
+
+**Room status:**
+```css
+flex flex-col lg:flex-row lg:items-center lg:justify-around
+gap-3 lg:gap-0
+```
+
+## Data update frequency
+
+Board charts update automatically when:
+- InfluxDB data refreshes (typically every 30 seconds)
+- Parent component passes new `inflValues` prop
+- Configuration is saved/updated
+
+## Use cases
+
+- Water treatment plant dashboards
+- Pumping station monitoring
+- System overview displays
+- Multi-parameter tracking
+- Operational control centers
+
+## Related components
+
+- [Liquid Fill](/components/charts/liquid-fill) - Used in top charts
+- [Circle Percentage](/components/charts/circle-percentage) - Alternative top chart
+- [Creating Dashboards](/guides/creating-dashboards) - Configuration guide
+
+## Related pages
+
+- [Boards view](/features/dashboard) - Board chart display page
+- [Board configuration](/guides/creating-dashboards) - Setup instructions

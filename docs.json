@@ -77,7 +77,10 @@
             "pages": [
               "components/charts/liquid-fill",
               "components/charts/gauge",
+              "components/charts/circle-percentage",
               "components/charts/boolean-chart",
+              "components/charts/multiple-boolean",
+              "components/charts/board-chart",
               "components/charts/pie-chart",
               "components/charts/bar-chart",
               "components/charts/line-chart"

@@ -1,0 +1,110 @@
+---
+title: "Circle percentage"
+description: "Circular gauge chart for displaying percentage values with gradient fill"
+icon: "circle-half-stroke"
+---
+
+The `CirclePorcentaje` component displays a value as a percentage within a circular gauge chart. It features a gradient progress indicator and centered text showing the percentage and value.
+
+## Component location
+
+Source: `/src/modules/Charts/components/CirclePorcentaje.jsx:1`
+
+## Props
+
+<ParamField path="value" type="number" default={0}>
+  Current value to display
+</ParamField>
+
+<ParamField path="maxValue" type="number" default={100}>
+  Maximum value for percentage calculation
+</ParamField>
+
+<ParamField path="color" type="string" default="#00FF00">
+  Primary color for the progress arc (supports hex colors)
+</ParamField>
+
+## How it works
+
+The component calculates percentage as `(value / maxValue) * 100` and displays it in a 270-degree circular gauge (starting at top, going clockwise).
+
+**Visual elements:**
+- **Progress arc**: Gradient from light green → custom color → dark green
+- **Track arc**: Light gray background showing full range
+- **Center text**: Large percentage display with small value/max below
+
+**States:**
+- **With data**: Shows calculated percentage with gradient progress
+- **No data**: Shows 0% with gray styling
+
+## Usage
+
+```jsx
+import CirclePorcentaje from './CirclePorcentaje'
+
+// Basic percentage display
+<CirclePorcentaje 
+  value={75} 
+  maxValue={100} 
+  color="#2196f3" 
+/>
+
+// Tank level with custom max
+<CirclePorcentaje 
+  value={850} 
+  maxValue={1200} 
+  color="#00c853" 
+/>
+
+// Pressure gauge
+<CirclePorcentaje 
+  value={4.2} 
+  maxValue={6.0} 
+  color="#ff6b6b" 
+/>
+```
+
+## Gradient configuration
+
+The progress arc uses a three-stop linear gradient:
+
+```javascript
+colorStops: [
+  { offset: 0, color: '#bbf7d0' },    // Light green start
+  { offset: 0.5, color },              // Custom color middle
+  { offset: 1, color: '#064e3b' }      // Dark green end
+]
+```
+
+## Use cases
+
+- Tank fill levels
+- Battery charge indicators
+- Completion percentages
+- Capacity monitoring
+- Goal progress tracking
+
+## Technical details
+
+**Arc configuration:**
+- Start angle: 90° (top)
+- End angle: -270° (full circle minus small gap)
+- Radius: 90% of container
+- Progress width: 24px
+- Track width: 12px (half of progress)
+
+**Value formatting:**
+- Percentage: 2 decimal places
+- Center display: `{percentage}%`
+- Bottom display: `{value} / {maxValue}`
+
+**Invalid data handling:**
+- Null/undefined values default to 0
+- Non-numeric values treated as 0
+- Shows "0%" when no valid data
+
+## Related components
+
+- [Gauge](/components/charts/gauge) - Speedometer-style gauge with needle
+- [Liquid Fill](/components/charts/liquid-fill) - Animated liquid fill gauge
+- [Board Chart](/components/charts/board-chart) - Uses CirclePorcentaje for top charts

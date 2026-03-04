@@ -1,0 +1,197 @@
+---
+title: "Multiple boolean chart"
+description: "Grid layout of LED status indicators for monitoring multiple boolean states"
+icon: "grid-2"
+---
+
+The `MultipleBooleanChart` component displays multiple boolean status indicators (LEDs) in a responsive grid layout. Each LED shows an on/off state with customizable labels and colors.
+
+## Component location
+
+Source: `/src/modules/Charts/components/MultipleBooleanChart.jsx:1`
+
+## Props
+
+<ParamField path="title" type="string">
+  Title displayed above the LED grid
+</ParamField>
+
+<ParamField path="columns" type="number" default={2}>
+  Number of columns in the grid layout
+</ParamField>
+
+<ParamField path="items" type="array" required>
+  Array of LED configuration objects. Each item must have:
+  - `key`: Unique identifier
+  - `title`: LED label text
+  - `value`: Boolean or "Sin datos"
+  - `textOn`: Text when active (default: "Encendido")
+  - `textOff`: Text when inactive (default: "Apagado")
+  - `colorOn`: Color when active (default: "#00ff00")
+  - `colorOff`: Color when inactive (default: "#444444")
+</ParamField>
+
+## LED indicator structure
+
+Each LED indicator consists of:
+
+1. **Label**: Item title displayed above the LED
+2. **LED circle**: 20px circular indicator with border
+3. **Status text**: Shows textOn/textOff/Sin datos
+
+**Visual states:**
+- **Active (ON)**: `colorOn` fill + matching border + `textOn` text
+- **Inactive (OFF)**: `colorOff` fill + gray border + `textOff` text
+- **No data**: Gray fill + gray border + "Sin datos" text
+
+## Usage
+
+```jsx
+import MultipleBooleanChart from './MultipleBooleanChart'
+
+// System status monitoring
+<MultipleBooleanChart
+  title="Sistema de bombeo"
+  columns={2}
+  items={[
+    {
+      key: 'pump1',
+      title: 'Bomba 1',
+      value: true,
+      textOn: 'Activa',
+      textOff: 'Inactiva',
+      colorOn: '#22c55e',
+      colorOff: '#dc2626'
+    },
+    {
+      key: 'pump2',
+      title: 'Bomba 2',
+      value: false,
+      textOn: 'Activa',
+      textOff: 'Inactiva',
+      colorOn: '#22c55e',
+      colorOff: '#dc2626'
+    },
+    {
+      key: 'valve1',
+      title: 'Válvula Principal',
+      value: true,
+      textOn: 'Abierta',
+      textOff: 'Cerrada',
+      colorOn: '#3b82f6',
+      colorOff: '#64748b'
+    },
+    {
+      key: 'alarm',
+      title: 'Alarma',
+      value: 'Sin datos',
+      textOn: 'Activa',
+      textOff: 'Normal',
+      colorOn: '#ef4444',
+      colorOff: '#10b981'
+    }
+  ]}
+/>
+```
+
+## Grid layout
+
+The component uses a responsive grid:
+
+```jsx
+<div className="grid gap-2" style={{
+  gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`
+}}>
+  {/* LED indicators */}
+</div>
+```
+
+**Responsive behavior:**
+- Columns adapt to container width
+- Maintains consistent spacing with `gap-2`
+- Each LED takes equal width (`minmax(0, 1fr)`)
+
+## Integration with real-time data
+
+When used in dashboards (e.g., Home view), LEDs receive real-time values from InfluxDB:
+
+```javascript
+// Configuration stored in database
+const ledsConfig = {
+  led1: {
+    key: 'led1',
+    title: 'Estado Motor',
+    textOn: 'Encendido',
+    textOff: 'Apagado',
+    colorOn: '#00ff00',
+    colorOff: '#444444'
+  }
+}
+
+// Influx variable linked to each LED
+const items = Object.values(ledsConfig).map((led) => {
+  const influx = chartData.find(d => d.key === led.key)
+  return {
+    ...led,
+    value: inflValues?.[influx?.InfluxVars?.id] ?? 'Sin datos',
+    influxVar: influx?.InfluxVars ?? null
+  }
+})
+```
+
+## Styling
+
+Each LED card has:
+- White background with rounded corners
+- Border: `border-slate-200`
+- Shadow: `shadow-sm`
+- Padding: `px-2 py-2`
+
+**LED circle:**
+```css
+width: 20px
+height: 20px
+border-radius: 50%
+border: 2px solid (matching color or gray)
+```
+
+## Configuration in charts
+
+Multiple Boolean Charts are configured via `/config/graphic/multipleBoolean`:
+
+1. Set chart title
+2. Define number of columns
+3. For each LED:
+   - Enter label text
+   - Select InfluxDB variable
+   - Set ON/OFF text labels
+   - Choose ON/OFF colors
+
+Configuration is stored with keys like:
+- `led1.title`
+- `led1.textOn`
+- `led1.colorOn`
+- etc.
+
+## Use cases
+
+- Equipment status monitoring (multiple pumps, valves, motors)
+- Alarm panel displays
+- System health dashboards
+- Process status indicators
+- Multi-zone monitoring
+
+## Comparison with BooleanChart
+
+| Feature | BooleanChart | MultipleBooleanChart |
+|---------|--------------|---------------------|
+| Display | Single large LED | Grid of compact LEDs |
+| Size | ~200px circle | 20px circles |
+| Layout | Standalone | Grid with N columns |
+| Glow effect | Yes | No |
+| Text position | Below LED | Right of LED |
+
+## Related components
+
+- [Boolean Chart](/components/charts/boolean-chart) - Single large LED indicator
+- [Board Chart](/components/charts/board-chart) - Dashboard with multiple chart types
